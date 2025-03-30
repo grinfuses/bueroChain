@@ -1,0 +1,13 @@
+server {
+    listen 80;
+    server_name buerochain.tudominio.com;  # Cambia esto por tu dominio
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/opt/bueroChain/buerochain.sock;
+    }
+
+    location /static {
+        alias /opt/bueroChain/app/static;
+    }
+} 
