@@ -1,0 +1,614 @@
+{% extends 'base.html' %}
+{% block title %}Sepolia — Ethereum Real{% endblock %}
+
+{% block content %}
+
+<!-- ===== CABECERA ===== -->
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+        <h5 class="mb-0 fw-bold d-flex align-items-center gap-2" style="letter-spacing:.01em">
+            <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg?v=035"
+                 style="height:22px;filter:hue-rotate(220deg) brightness(1.4)" alt="ETH">
+            Ethereum Sepolia — NFTs Reales
+        </h5>
+        <p class="mb-0" style="font-size:.78rem;color:var(--text-muted)">
+            Contrato ERC-721 en la testnet pública de Ethereum
+        </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="/nfts" class="btn-refresh" style="text-decoration:none;display:inline-flex;align-items:center;gap:.4rem">
+            <i class="fas fa-palette me-1"></i> BueroChain NFTs
+        </a>
+        <a href="/dashboard" class="btn-refresh" style="text-decoration:none;display:inline-flex;align-items:center;gap:.4rem">
+            <i class="fas fa-arrow-left"></i> Panel
+        </a>
+    </div>
+</div>
+
+<!-- ===== COMPARATIVA BUEROCHAIN vs ETHEREUM ===== -->
+<div class="card mb-3" style="border-color:rgba(98,126,234,.4)">
+    <div class="card-header" style="background:rgba(98,126,234,.08)">
+        <i class="fas fa-balance-scale me-2" style="color:#627eea"></i>
+        BueroChain vs Ethereum — ¿Cuál es la diferencia?
+    </div>
+    <div class="card-body" style="padding:.85rem 1rem">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="p-3 rounded" style="background:rgba(62,207,110,.06);border:1px solid rgba(62,207,110,.2)">
+                    <div class="fw-bold mb-2" style="font-size:.82rem;color:var(--green)">
+                        <i class="fas fa-link me-2"></i>BueroChain NFTs
+                    </div>
+                    <ul style="font-size:.78rem;color:var(--text-muted);margin:0;padding-left:1.1rem;line-height:2">
+                        <li>Blockchain privada en el servidor del aula</li>
+                        <li>NFTs en base de datos SQLite</li>
+                        <li>Sin coste real (BUERO ficticio)</li>
+                        <li>Se reinicia al apagar el servidor</li>
+                        <li>Solo accesible dentro del aula</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 rounded" style="background:rgba(98,126,234,.08);border:1px solid rgba(98,126,234,.25)">
+                    <div class="fw-bold mb-2" style="font-size:.82rem;color:#627eea">
+                        <i class="fab fa-ethereum me-2"></i>Ethereum Sepolia
+                    </div>
+                    <ul style="font-size:.78rem;color:var(--text-muted);margin:0;padding-left:1.1rem;line-height:2">
+                        <li>Blockchain pública descentralizada</li>
+                        <li>NFTs en smart contract ERC-721</li>
+                        <li>Requiere gas (SepoliaETH de faucet)</li>
+                        <li>Permanente e inmutable</li>
+                        <li>Verificable por cualquiera en Etherscan</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== FILA PRINCIPAL ===== -->
+<div class="row g-3 mb-3">
+
+    <!-- METAMASK + ESTADO -->
+    <div class="col-md-4">
+        <div class="card h-100" style="border-top:2px solid #627eea">
+            <div class="card-header">
+                <i class="fas fa-wallet me-2" style="color:#f6851b"></i>MetaMask
+                <span id="networkBadge" class="ms-auto" style="font-size:.68rem"></span>
+            </div>
+            <div class="card-body d-flex flex-column gap-3 py-3">
+
+                <!-- No MetaMask -->
+                <div id="noMetaMask" style="display:none;text-align:center">
+                    <i class="fas fa-exclamation-triangle mb-2" style="font-size:2rem;color:var(--orange)"></i>
+                    <p style="font-size:.82rem;color:var(--text-muted)">MetaMask no está instalado.</p>
+                    <a href="https://metamask.io/download/" target="_blank" class="btn-explain"
+                       style="text-decoration:none;display:inline-flex;align-items:center;gap:.4rem">
+                        <i class="fas fa-download"></i> Instalar MetaMask
+                    </a>
+                </div>
+
+                <!-- Desconectado -->
+                <div id="disconnected">
+                    <div class="text-center mb-3">
+                        <div style="width:52px;height:52px;background:rgba(246,133,27,.15);border-radius:12px;
+                                    display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto .75rem">
+                            🦊
+                        </div>
+                        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:.75rem">
+                            Conecta tu wallet para interactuar con el contrato en Sepolia
+                        </p>
+                    </div>
+                    <button class="btn-send w-100 py-2" onclick="connectWallet()"
+                            style="border-radius:8px;font-weight:600">
+                        <i class="fas fa-plug me-2"></i>Conectar MetaMask
+                    </button>
+                </div>
+
+                <!-- Conectado -->
+                <div id="connected" style="display:none">
+                    <div class="d-flex flex-column gap-2">
+                        <div class="p-2 rounded" style="background:var(--bg-base);border:1px solid var(--border)">
+                            <div class="block-field-label">Dirección</div>
+                            <div class="hash-text hash-blue mt-1" id="walletAddress" style="font-size:.62rem"></div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <div class="difficulty-pill flex-fill text-center">
+                                <div class="block-field-label">Balance</div>
+                                <div style="font-size:1rem;font-weight:700;color:#627eea" id="ethBalance">—</div>
+                                <div style="font-size:.62rem;color:var(--text-muted)">SepoliaETH</div>
+                            </div>
+                            <div class="difficulty-pill flex-fill text-center">
+                                <div class="block-field-label">Mis NFTs</div>
+                                <div style="font-size:1rem;font-weight:700;color:var(--purple)" id="myNftCount">—</div>
+                                <div style="font-size:.62rem;color:var(--text-muted)">tokens</div>
+                            </div>
+                        </div>
+                        <div id="wrongNetwork" style="display:none" class="p-2 rounded text-center"
+                             style="background:rgba(229,90,78,.1);border:1px solid rgba(229,90,78,.3)">
+                            <p style="font-size:.78rem;color:var(--red);margin-bottom:.5rem">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Cambia a Sepolia
+                            </p>
+                            <button class="btn-mine w-100" onclick="switchToSepolia()" style="font-size:.78rem;padding:.3rem">
+                                Cambiar a Sepolia
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faucet -->
+                <div class="p-2 rounded mt-auto" style="background:rgba(98,126,234,.07);border:1px solid rgba(98,126,234,.2);font-size:.72rem">
+                    <i class="fas fa-faucet me-1" style="color:#627eea"></i>
+                    ¿Sin SepoliaETH?
+                    <a href="https://sepoliafaucet.com" target="_blank" style="color:#627eea">sepoliafaucet.com</a>
+                    o
+                    <a href="https://faucet.quicknode.com/ethereum/sepolia" target="_blank" style="color:#627eea">quicknode</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTRATO -->
+    <div class="col-md-4">
+        <div class="card h-100" style="border-top:2px solid var(--purple)">
+            <div class="card-header">
+                <i class="fas fa-file-contract me-2" style="color:var(--purple)"></i>Smart Contract ERC-721
+            </div>
+            <div class="card-body d-flex flex-column gap-2 py-3">
+                <div class="p-2 rounded" style="background:var(--bg-base);border:1px solid var(--border)">
+                    <div class="block-field-label">Dirección del contrato</div>
+                    <div class="hash-text hash-green mt-1" id="contractAddressDisplay" style="font-size:.62rem;word-break:break-all">
+                        Cargando…
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="difficulty-pill flex-fill text-center">
+                        <div class="block-field-label">Minteados</div>
+                        <div style="font-size:1.2rem;font-weight:700;color:var(--green)" id="totalMinted">—</div>
+                    </div>
+                    <div class="difficulty-pill flex-fill text-center">
+                        <div class="block-field-label">Max supply</div>
+                        <div style="font-size:1.2rem;font-weight:700;color:var(--orange)" id="maxSupply">—</div>
+                    </div>
+                </div>
+                <div class="difficulty-pill text-center">
+                    <div class="block-field-label">Coste de minteo</div>
+                    <div style="font-size:1.1rem;font-weight:700;color:#627eea">Solo gas</div>
+                    <div style="font-size:.65rem;color:var(--text-muted)">~ 0.0001 SepoliaETH</div>
+                </div>
+                <a id="etherscanLink" href="#" target="_blank"
+                   class="btn-refresh text-center mt-auto"
+                   style="text-decoration:none;display:block;font-size:.75rem">
+                    <i class="fas fa-external-link-alt me-1"></i>Ver en Etherscan
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MINTEAR -->
+    <div class="col-md-4">
+        <div class="card h-100" style="border-top:2px solid var(--orange)">
+            <div class="card-header">
+                <i class="fas fa-hammer me-2" style="color:var(--orange)"></i>Mintear NFT en Ethereum
+            </div>
+            <div class="card-body d-flex flex-column gap-3 py-3 text-center">
+                <p style="font-size:.8rem;color:var(--text-muted);line-height:1.6">
+                    Al mintear se enviará una transacción real a la blockchain de Ethereum Sepolia.
+                    El NFT quedará en tu wallet de MetaMask para siempre.
+                </p>
+                <div class="p-2 rounded" style="background:rgba(240,145,50,.08);border:1px solid rgba(240,145,50,.25);font-size:.78rem">
+                    <i class="fas fa-info-circle me-1" style="color:var(--orange)"></i>
+                    Necesitas MetaMask conectado a <strong>Sepolia</strong> y algo de SepoliaETH para el gas.
+                </div>
+                <button class="btn-mine w-100 py-2 mt-auto" id="mintSepoliaBtn"
+                        onclick="mintOnSepolia()" disabled>
+                    <i class="fas fa-hammer me-2"></i>Mintear en Sepolia
+                </button>
+                <div id="mintSepoliaProgress" style="display:none">
+                    <div class="d-flex align-items-center justify-content-center gap-2 mb-1"
+                         style="color:var(--orange);font-size:.78rem">
+                        <i class="fas fa-spinner spinning"></i> Esperando confirmación…
+                    </div>
+                    <div style="font-size:.7rem;color:var(--text-muted)" id="txHashDisplay"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== GALERÍA SEPOLIA ===== -->
+<div class="card">
+    <div class="card-header">
+        <i class="fab fa-ethereum me-2" style="color:#627eea"></i>
+        NFTs en Sepolia
+        <span class="ms-2 badge" id="sepoliaCount"
+              style="background:rgba(98,126,234,.15);border:1px solid rgba(98,126,234,.35);color:#627eea;
+                     font-size:.7rem;border-radius:20px;padding:.15rem .5rem">—</span>
+        <button class="btn-refresh ms-auto" onclick="loadSepoliaNFTs()">
+            <i class="fas fa-sync me-1"></i>Actualizar
+        </button>
+    </div>
+    <div class="card-body" style="padding:1rem">
+        <div id="sepoliaEmpty" class="text-center py-4" style="display:none">
+            <div style="font-size:2.5rem;margin-bottom:.5rem">⛓️</div>
+            <p style="color:var(--text-muted);font-size:.85rem">
+                Aún no hay NFTs minteados en este contrato
+            </p>
+        </div>
+        <div id="sepoliaLoading" class="text-center py-4">
+            <i class="fas fa-spinner spinning me-2" style="color:var(--text-muted)"></i>
+            <span style="color:var(--text-muted);font-size:.85rem">Leyendo la blockchain…</span>
+        </div>
+        <div id="sepoliaGrid" class="row g-3"></div>
+    </div>
+</div>
+
+<!-- Contrato LEP original (referencia) -->
+<div class="card mt-3" style="border-color:rgba(98,126,234,.25)">
+    <div class="card-header" style="background:rgba(98,126,234,.05)">
+        <i class="fas fa-history me-2" style="color:#627eea"></i>
+        Contrato LEP original — referencia educativa
+        <span class="ms-auto" style="font-size:.72rem;color:var(--text-muted)">Solo lectura</span>
+    </div>
+    <div class="card-body" style="padding:.85rem 1rem">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <div class="block-field-label">Dirección</div>
+                <div class="hash-text hash-green" style="font-size:.68rem">
+                    0xB3fc16A52faf764CCCCd55066b250428F31617D5
+                </div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem">
+                    MaxSupply: 1 · Precio: 0.01 ETH · Ya minteado (token #1)
+                </div>
+            </div>
+            <div class="col-md-6 d-flex gap-2 flex-wrap">
+                <a href="https://sepolia.etherscan.io/address/0xB3fc16A52faf764CCCCd55066b250428F31617D5"
+                   target="_blank" class="btn-refresh" style="text-decoration:none;font-size:.75rem">
+                    <i class="fas fa-external-link-alt me-1"></i>Etherscan
+                </a>
+                <a href="https://testnets.opensea.io/assets/sepolia/0xB3fc16A52faf764CCCCd55066b250428F31617D5/1"
+                   target="_blank" class="btn-refresh" style="text-decoration:none;font-size:.75rem">
+                    <i class="fas fa-external-link-alt me-1"></i>OpenSea Testnet
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- ethers.js v6 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+
+<style>
+.sepolia-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+}
+.sepolia-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0,0,0,.45);
+}
+.eth-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    background: rgba(98,126,234,.12);
+    border: 1px solid rgba(98,126,234,.3);
+    color: #627eea;
+    border-radius: 20px;
+    font-size: .68rem;
+    padding: .15rem .5rem;
+    font-weight: 600;
+}
+</style>
+
+<script>
+// ─── Configuración ────────────────────────────────────────────────────────────
+// ⚠️  Actualiza esta dirección después de desplegar BueroChainNFT.sol
+const NFT_CONTRACT_ADDRESS = "0xB3fc16A52faf764CCCCd55066b250428F31617D5";
+
+const SEPOLIA_CHAIN_ID = "0xaa36a7";  // 11155111 en hex
+const SEPOLIA_PARAMS = {
+    chainId: SEPOLIA_CHAIN_ID,
+    chainName: "Sepolia Testnet",
+    nativeCurrency: { name: "SepoliaETH", symbol: "ETH", decimals: 18 },
+    rpcUrls: ["https://rpc.sepolia.org"],
+    blockExplorerUrls: ["https://sepolia.etherscan.io"],
+};
+
+// ABI mínimo — compatible con NFTCollection.sol y BueroChainNFT.sol
+const NFT_ABI = [
+    "function mintNFT(address recipient) returns (uint256)",
+    "function totalMinted() view returns (uint256)",
+    "function maxSupply() view returns (uint256)",
+    "function tokenURI(uint256 tokenId) view returns (string)",
+    "function ownerOf(uint256 tokenId) view returns (address)",
+    "function name() view returns (string)",
+    "function symbol() view returns (string)",
+    "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
+];
+
+const PUBLIC_RPC = "https://ethereum-sepolia-rpc.publicnode.com";
+
+let provider   = null;
+let signer     = null;
+let userAddress = null;
+let contract   = null;
+let readContract = null;  // read-only, sin MetaMask
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+    initContractDisplay();
+
+    if (typeof window.ethereum === 'undefined') {
+        document.getElementById('noMetaMask').style.display = '';
+        document.getElementById('disconnected').style.display = 'none';
+        return;
+    }
+
+    // Setup read-only provider for gallery (no MetaMask needed)
+    try {
+        const rpc = new ethers.JsonRpcProvider(PUBLIC_RPC);
+        readContract = new ethers.Contract(NFT_CONTRACT_ADDRESS, NFT_ABI, rpc);
+        loadContractInfo();
+        loadSepoliaNFTs();
+    } catch(e) {
+        document.getElementById('sepoliaLoading').style.display = 'none';
+    }
+
+    // Check if already connected
+    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    if (accounts.length > 0) {
+        await setupConnected(accounts[0]);
+    }
+
+    window.ethereum.on('accountsChanged', async (accounts) => {
+        if (accounts.length > 0) await setupConnected(accounts[0]);
+        else disconnectWallet();
+    });
+    window.ethereum.on('chainChanged', () => window.location.reload());
+});
+
+function initContractDisplay() {
+    const addr = NFT_CONTRACT_ADDRESS;
+    document.getElementById('contractAddressDisplay').textContent = addr;
+    document.getElementById('etherscanLink').href =
+        `https://sepolia.etherscan.io/address/${addr}`;
+}
+
+// ─── Cargar info del contrato ─────────────────────────────────────────────────
+async function loadContractInfo() {
+    if (!readContract) return;
+    try {
+        const [minted, max] = await Promise.all([
+            readContract.totalMinted().catch(() => null),
+            readContract.maxSupply(),
+        ]);
+        document.getElementById('totalMinted').textContent = minted !== null ? minted.toString() : '?';
+        document.getElementById('maxSupply').textContent   = max.toString();
+        document.getElementById('sepoliaCount').textContent = minted !== null ? minted.toString() : '?';
+    } catch(e) {
+        document.getElementById('totalMinted').textContent = '?';
+        document.getElementById('maxSupply').textContent   = '?';
+    }
+}
+
+// ─── Conectar MetaMask ────────────────────────────────────────────────────────
+async function connectWallet() {
+    try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        await setupConnected(accounts[0]);
+    } catch(e) {
+        showAlert('<i class="fas fa-times-circle me-2"></i>Conexión cancelada.', 'danger');
+    }
+}
+
+async function setupConnected(address) {
+    provider    = new ethers.BrowserProvider(window.ethereum);
+    signer      = await provider.getSigner();
+    userAddress = address;
+    contract    = new ethers.Contract(NFT_CONTRACT_ADDRESS, NFT_ABI, signer);
+
+    document.getElementById('disconnected').style.display = 'none';
+    document.getElementById('connected').style.display   = '';
+    document.getElementById('walletAddress').textContent  = address;
+
+    // Check network
+    const network = await provider.getNetwork();
+    if (network.chainId !== 11155111n) {
+        document.getElementById('wrongNetwork').style.display = '';
+        document.getElementById('networkBadge').innerHTML =
+            `<span style="color:var(--red);font-size:.7rem"><i class="fas fa-exclamation-circle me-1"></i>Red incorrecta</span>`;
+    } else {
+        document.getElementById('wrongNetwork').style.display = 'none';
+        document.getElementById('networkBadge').innerHTML =
+            `<span style="color:var(--green);font-size:.7rem"><i class="fas fa-circle me-1"></i>Sepolia</span>`;
+        document.getElementById('mintSepoliaBtn').disabled = false;
+    }
+
+    // Balance
+    const bal = await provider.getBalance(address);
+    document.getElementById('ethBalance').textContent = parseFloat(ethers.formatEther(bal)).toFixed(4);
+
+    // My NFTs count (from Transfer events to my address)
+    countMyNFTs(address);
+}
+
+async function countMyNFTs(address) {
+    if (!readContract) return;
+    try {
+        const filter  = readContract.filters.Transfer(null, address);
+        const events  = await readContract.queryFilter(filter, 0, 'latest');
+        document.getElementById('myNftCount').textContent = events.length;
+    } catch(e) {}
+}
+
+function disconnectWallet() {
+    userAddress = null; signer = null; contract = null;
+    document.getElementById('connected').style.display   = 'none';
+    document.getElementById('disconnected').style.display = '';
+    document.getElementById('mintSepoliaBtn').disabled   = true;
+}
+
+async function switchToSepolia() {
+    try {
+        await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: SEPOLIA_CHAIN_ID }],
+        });
+    } catch(e) {
+        if (e.code === 4902) {
+            await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [SEPOLIA_PARAMS],
+            });
+        }
+    }
+}
+
+// ─── Mintear en Sepolia ───────────────────────────────────────────────────────
+async function mintOnSepolia() {
+    if (!contract || !userAddress) return;
+
+    const btn  = document.getElementById('mintSepoliaBtn');
+    const prog = document.getElementById('mintSepoliaProgress');
+    const txEl = document.getElementById('txHashDisplay');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner spinning me-2"></i>Enviando tx…';
+    prog.style.display = '';
+    txEl.innerHTML = '';
+
+    try {
+        const tx = await contract.mintNFT(userAddress);
+        txEl.innerHTML = `<a href="https://sepolia.etherscan.io/tx/${tx.hash}"
+            target="_blank" style="color:var(--orange);font-family:'JetBrains Mono',monospace;font-size:.65rem">
+            ${tx.hash.substring(0,20)}… <i class="fas fa-external-link-alt"></i></a>`;
+
+        btn.innerHTML = '<i class="fas fa-spinner spinning me-2"></i>Confirmando…';
+
+        const receipt = await tx.wait();
+        const tokenIdEvent = receipt.logs.find(l => l.topics.length === 4);
+        const tokenId = tokenIdEvent ? parseInt(tokenIdEvent.topics[3], 16) : '?';
+
+        showAlert(`
+            <i class="fab fa-ethereum me-2"></i>
+            ¡NFT minteado en Ethereum! Token #${tokenId}
+            — <a href="https://sepolia.etherscan.io/tx/${tx.hash}" target="_blank"
+                 style="color:var(--green)">Ver en Etherscan</a>`);
+
+        loadContractInfo();
+        loadSepoliaNFTs();
+        countMyNFTs(userAddress);
+
+    } catch(e) {
+        const msg = e.reason || e.message || 'Error desconocido';
+        showAlert(`<i class="fas fa-times-circle me-2"></i>${msg}`, 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-hammer me-2"></i>Mintear en Sepolia';
+        prog.style.display = 'none';
+    }
+}
+
+// ─── Galería Sepolia ──────────────────────────────────────────────────────────
+async function loadSepoliaNFTs() {
+    if (!readContract) return;
+    const loading = document.getElementById('sepoliaLoading');
+    const grid    = document.getElementById('sepoliaGrid');
+    const empty   = document.getElementById('sepoliaEmpty');
+    loading.style.display = '';
+    grid.innerHTML = '';
+
+    try {
+        // Get all mint events
+        const filter = readContract.filters.Transfer(ethers.ZeroAddress);
+        const events = await readContract.queryFilter(filter, 0, 'latest');
+
+        loading.style.display = 'none';
+        document.getElementById('sepoliaCount').textContent = events.length;
+
+        if (!events.length) { empty.style.display = ''; return; }
+        empty.style.display = 'none';
+
+        // Render cards (fetch token URIs in parallel)
+        const tokens = await Promise.all(events.map(async (ev) => {
+            const tokenId = ev.args[2].toString();
+            try {
+                const [owner, uri] = await Promise.all([
+                    readContract.ownerOf(tokenId),
+                    readContract.tokenURI(tokenId),
+                ]);
+                return { tokenId, owner, uri };
+            } catch {
+                return { tokenId, owner: '?', uri: '' };
+            }
+        }));
+
+        // Fetch metadata
+        const withMeta = await Promise.all(tokens.map(async (t) => {
+            let image = '', name = `NFT #${t.tokenId}`;
+            if (t.uri) {
+                const httpUri = t.uri.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+                try {
+                    const r = await fetch(httpUri, { signal: AbortSignal.timeout(4000) });
+                    if (r.ok) {
+                        const meta = await r.json();
+                        name  = meta.name  || name;
+                        image = meta.image || '';
+                        if (image.startsWith('ipfs://'))
+                            image = image.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
+                    }
+                } catch {}
+            }
+            return { ...t, name, image };
+        }));
+
+        grid.innerHTML = withMeta.map(t => {
+            const shortOwner = t.owner !== '?'
+                ? t.owner.substring(0,6) + '…' + t.owner.substring(38)
+                : '?';
+            const isMine = userAddress && t.owner.toLowerCase() === userAddress.toLowerCase();
+            const art = t.image
+                ? `<img src="${t.image}" style="width:100%;height:160px;object-fit:cover" loading="lazy"
+                        onerror="this.parentElement.innerHTML='<div style=height:160px;background:var(--bg-base);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:2rem>⛓️</div>'">`
+                : `<div style="height:160px;background:linear-gradient(135deg,#1a1a4e,#2d2d8f);
+                    display:flex;align-items:center;justify-content:center;font-size:2.5rem">⛓️</div>`;
+            return `
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="sepolia-card">
+                    ${art}
+                    <div style="padding:.75rem">
+                        <div class="d-flex align-items-start justify-content-between gap-1 mb-1">
+                            <span class="fw-bold" style="font-size:.85rem">${t.name}</span>
+                            ${isMine ? '<span class="eth-badge"><i class="fas fa-crown me-1"></i>Tuyo</span>' : ''}
+                        </div>
+                        <div style="font-size:.68rem;color:var(--text-muted)" class="mb-1">
+                            Token ID: <span style="font-family:'JetBrains Mono',monospace;color:#627eea">#${t.tokenId}</span>
+                        </div>
+                        <div style="font-size:.65rem;color:var(--text-muted)">
+                            <i class="fas fa-user me-1"></i>${shortOwner}
+                        </div>
+                        <a href="https://sepolia.etherscan.io/token/${NFT_CONTRACT_ADDRESS}?a=${t.tokenId}"
+                           target="_blank" class="btn-refresh d-block text-center mt-2"
+                           style="text-decoration:none;font-size:.72rem">
+                            <i class="fas fa-external-link-alt me-1"></i>Etherscan
+                        </a>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch(e) {
+        loading.style.display = 'none';
+        grid.innerHTML = `<div class="col-12 text-center py-3" style="color:var(--text-muted);font-size:.85rem">
+            <i class="fas fa-exclamation-triangle me-2"></i>Error al leer la blockchain. Intenta de nuevo.
+        </div>`;
+    }
+}
+</script>
+{% endblock %}

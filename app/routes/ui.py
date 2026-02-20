@@ -71,3 +71,9 @@ def nfts():
         other_users=other_users,
         mint_fee=NFT.MINT_FEE,
     )
+
+
+@bp.route('/sepolia')
+@login_required
+def sepolia():
+    return render_template('sepolia.html')
