@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BueroChain — {% block title %}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base:    #080b10;
+            --bg-card:    #0f1520;
+            --bg-card2:   #141c2b;
+            --bg-input:   #0c1118;
+            --border:     #1e2d45;
+            --border-hi:  #2a4070;
+            --text-main:  #d4dff0;
+            --text-muted: #6a7d9a;
+            --blue:       #4f8ef7;
+            --blue-glow:  rgba(79,142,247,.18);
+            --green:      #3ecf6e;
+            --green-glow: rgba(62,207,110,.15);
+            --orange:     #f09132;
+            --orange-glow:rgba(240,145,50,.15);
+            --red:        #e55a4e;
+            --yellow:     #d4a017;
+            --purple:     #8b5cf6;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+
+        /* ── Navbar ── */
+        .navbar-bc {
+            background: linear-gradient(90deg, #0a1020 0%, #0d1528 100%);
+            border-bottom: 1px solid var(--border);
+            padding: .7rem 1.75rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0,0,0,.4);
+        }
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+        .navbar-logo .logo-icon {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .9rem;
+            box-shadow: 0 0 14px rgba(79,142,247,.4);
+        }
+        .navbar-logo strong {
+            font-size: 1.05rem;
+            letter-spacing: .02em;
+            background: linear-gradient(90deg, #d4dff0, #7eb3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .navbar-logo .tag {
+            font-size: .72rem;
+            color: var(--text-muted);
+            background: rgba(255,255,255,.05);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: .1rem .5rem;
+        }
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: .3rem .75rem;
+            font-size: .85rem;
+        }
+        .user-pill .avatar {
+            width: 24px; height: 24px;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .65rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 8px;
+            padding: .3rem .7rem;
+            font-size: .8rem;
+            transition: all .2s;
+        }
+        .btn-logout:hover { border-color: var(--red); color: var(--red); }
+        .btn-explain {
+            background: rgba(139,92,246,.12);
+            border: 1px solid rgba(139,92,246,.35);
+            color: var(--purple);
+            border-radius: 8px;
+            padding: .3rem .75rem;
+            font-size: .8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .btn-explain:hover { background: rgba(139,92,246,.22); border-color: var(--purple); }
+
+        /* ── Offcanvas explicación ── */
+        .offcanvas-explain {
+            background: #0c1220 !important;
+            border-left: 1px solid var(--border) !important;
+            width: 370px !important;
+        }
+        .offcanvas-explain .offcanvas-header {
+            background: #0f1828;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.25rem;
+        }
+        .offcanvas-explain .offcanvas-title {
+            font-size: .95rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .explain-section {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: .75rem;
+            overflow: hidden;
+        }
+        .explain-section-header {
+            background: var(--bg-card2);
+            padding: .6rem .9rem;
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            font-weight: 600;
+            font-size: .82rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .explain-section-header .icon {
+            width: 28px; height: 28px;
+            border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .75rem;
+            flex-shrink: 0;
+        }
+        .explain-section-body {
+            padding: .75rem .9rem;
+            font-size: .8rem;
+            color: var(--text-muted);
+            line-height: 1.65;
+            background: var(--bg-card);
+        }
+        .explain-section-body strong { color: var(--text-main); }
+        .explain-section-body code {
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: .05rem .3rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .75rem;
+            color: var(--orange);
+        }
+        .explain-tag {
+            display: inline-block;
+            background: rgba(79,142,247,.1);
+            border: 1px solid rgba(79,142,247,.25);
+            color: var(--blue);
+            border-radius: 20px;
+            font-size: .68rem;
+            padding: .1rem .45rem;
+            margin-top: .4rem;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .card-header {
+            background: var(--bg-card2);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: .85rem;
+            padding: .7rem 1rem;
+            display: flex;
+            align-items: center;
+        }
+        .card-accent-blue  { border-top: 2px solid var(--blue); }
+        .card-accent-green { border-top: 2px solid var(--green); }
+        .card-accent-orange{ border-top: 2px solid var(--orange); }
+        .card-accent-purple{ border-top: 2px solid var(--purple); }
+
+        /* ── Balance display ── */
+        .balance-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 0 1rem;
+        }
+        .balance-num {
+            font-size: 3.2rem;
+            font-weight: 700;
+            color: var(--green);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 30px var(--green-glow);
+        }
+        .balance-ticker {
+            font-size: .75rem;
+            color: var(--text-muted);
+            letter-spacing: .12em;
+            font-weight: 600;
+            margin-top: .3rem;
+        }
+        .wallet-addr-box {
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .6rem .85rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        /* ── Hash text ── */
+        .hash-text {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: .68rem;
+            word-break: break-all;
+            letter-spacing: -.01em;
+        }
+        .hash-green { color: var(--green); }
+        .hash-blue  { color: var(--blue); }
+
+        /* ── Forms ── */
+        .form-control, .form-select {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 8px;
+            font-size: .875rem;
+        }
+        .form-control:focus, .form-select:focus {
+            background: var(--bg-input);
+            border-color: var(--blue);
+            color: var(--text-main);
+            box-shadow: 0 0 0 3px var(--blue-glow);
+        }
+        .form-select option { background: #141c2b; }
+        .input-group-text {
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: .8rem;
+        }
+        .form-label { color: var(--text-muted); font-size: .8rem; font-weight: 500; margin-bottom: .35rem; }
+
+        /* ── Buttons ── */
+        .btn-send {
+            background: linear-gradient(135deg, #1a3a6e, #2a5cb8);
+            border: 1px solid #3a70e0;
+            color: #fff;
+            font-weight: 600;
+            border-radius: 8px;
+            font-size: .875rem;
+            transition: all .2s;
+        }
+        .btn-send:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2a5cb8, #1a3a6e);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(79,142,247,.3);
+        }
+        .btn-mine {
+            background: linear-gradient(135deg, #7a3a00, #c97010);
+            border: 1px solid var(--orange);
+            color: #fff;
+            font-weight: 700;
+            border-radius: 8px;
+            font-size: .9rem;
+            transition: all .25s;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-mine::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -75%;
+            width: 50%; height: 200%;
+            background: rgba(255,255,255,.08);
+            transform: rotate(25deg);
+            transition: left .4s;
+        }
+        .btn-mine:hover:not(:disabled)::before { left: 125%; }
+        .btn-mine:hover:not(:disabled) {
+            background: linear-gradient(135deg, #c97010, #f0a040);
+            color: #fff;
+            box-shadow: 0 0 24px rgba(240,145,50,.4);
+        }
+        .btn-mine:disabled { opacity: .65; }
+        .btn-refresh {
+            background: var(--bg-card2);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 8px;
+            font-size: .78rem;
+            padding: .3rem .65rem;
+        }
+        .btn-refresh:hover { border-color: var(--blue); color: var(--blue); }
+
+        /* ── Difficulty pills ── */
+        .difficulty-pill {
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: .5rem .85rem;
+            text-align: center;
+        }
+        .difficulty-hash {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--orange);
+            letter-spacing: .05em;
+        }
+        .reward-display {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--orange);
+            text-shadow: 0 0 20px var(--orange-glow);
+        }
+
+        /* ── Mine progress ── */
+        #mineProgress {
+            font-size: .78rem;
+            color: var(--text-muted);
+        }
+        .mine-hash-preview {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .7rem;
+            color: var(--orange);
+            opacity: .7;
+            word-break: break-all;
+            text-align: center;
+            min-height: 1.2em;
+        }
+
+        /* ── Transactions ── */
+        .tx-row {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .6rem 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: background .15s;
+        }
+        .tx-row:last-child { border-bottom: none; }
+        .tx-row:hover { background: rgba(255,255,255,.02); }
+        .tx-from { color: var(--red); font-weight: 600; font-size: .82rem; }
+        .tx-to   { color: var(--green); font-weight: 600; font-size: .82rem; }
+        .badge-net {
+            background: linear-gradient(135deg, #1a3a80, #2255cc);
+            color: #90baff;
+            border: 1px solid #2a4fa0;
+            font-size: .72rem;
+            border-radius: 6px;
+            padding: .2rem .5rem;
+        }
+        .tx-amount {
+            margin-left: auto;
+            background: rgba(240,145,50,.12);
+            border: 1px solid rgba(240,145,50,.25);
+            color: var(--orange);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .78rem;
+            font-weight: 600;
+            border-radius: 6px;
+            padding: .15rem .45rem;
+        }
+
+        /* ── Blockchain ── */
+        .block-chain {
+            display: flex;
+            overflow-x: auto;
+            padding: .75rem .25rem 1rem;
+            align-items: flex-start;
+            gap: 0;
+        }
+        .block-card {
+            min-width: 230px;
+            max-width: 230px;
+            flex-shrink: 0;
+            border-radius: 10px !important;
+            transition: transform .15s, box-shadow .15s;
+        }
+        .block-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(0,0,0,.4);
+        }
+        .genesis-border { border-color: var(--blue) !important; box-shadow: 0 0 14px rgba(79,142,247,.2); }
+        .chain-arrow {
+            color: var(--border-hi);
+            font-size: 1rem;
+            margin: 0 2px;
+            padding-top: 48px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: flex-start;
+        }
+        .block-index-badge {
+            font-size: .72rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--blue);
+        }
+        .block-field-label {
+            font-size: .6rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: .15rem;
+        }
+        .nonce-badge {
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .68rem;
+            border-radius: 5px;
+            padding: .1rem .4rem;
+        }
+
+        /* ── Stats bar ── */
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: .7rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+        .stat-icon {
+            width: 36px; height: 36px;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem;
+            flex-shrink: 0;
+        }
+        .stat-icon.blue  { background: rgba(79,142,247,.15); color: var(--blue); }
+        .stat-icon.green { background: rgba(62,207,110,.12); color: var(--green); }
+        .stat-icon.orange{ background: rgba(240,145,50,.12); color: var(--orange); }
+        .stat-icon.purple{ background: rgba(139,92,246,.12); color: var(--purple); }
+        .stat-value { font-size: 1.3rem; font-weight: 700; line-height: 1.1; }
+        .stat-label { font-size: .7rem; color: var(--text-muted); font-weight: 500; }
+
+        /* ── Alerts ── */
+        .alert-success {
+            background: rgba(62,207,110,.1);
+            border: 1px solid rgba(62,207,110,.3);
+            color: var(--green);
+            border-radius: 10px;
+        }
+        .alert-danger {
+            background: rgba(229,90,78,.1);
+            border: 1px solid rgba(229,90,78,.3);
+            color: var(--red);
+            border-radius: 10px;
+        }
+        .btn-close { filter: invert(1) opacity(.6); }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { height: 5px; width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-card2); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
+
+        /* ── Animations ── */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinning { display: inline-block; animation: spin .9s linear infinite; }
+        @keyframes pulse-green {
+            0%,100% { text-shadow: 0 0 20px rgba(62,207,110,.3); }
+            50%      { text-shadow: 0 0 40px rgba(62,207,110,.7); }
+        }
+        .balance-num.pulse { animation: pulse-green 1.5s ease-in-out 3; }
+
+        /* ── Legend dot ── */
+        .legend-dot {
+            width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: .3rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar-bc d-flex justify-content-between align-items-center">
+    <div class="navbar-logo">
+        <div class="logo-icon"><i class="fas fa-link"></i></div>
+        <strong>BueroChain</strong>
+        <span class="tag">Educativa</span>
+    </div>
+    {% if current_user.is_authenticated %}
+    <div class="d-flex align-items-center gap-2">
+        <a href="/nfts" class="btn-explain" style="text-decoration:none"
+           title="Galería NFT">
+            <i class="fas fa-palette me-2"></i>NFTs
+        </a>
+        <button class="btn-explain" data-bs-toggle="offcanvas" data-bs-target="#explainPanel">
+            <i class="fas fa-graduation-cap me-2"></i>Explicación
+        </button>
+        <div class="user-pill">
+            <div class="avatar">{{ current_user.username[0].upper() }}</div>
+            <span style="font-weight:600">{{ current_user.username }}</span>
+        </div>
+        <a href="/logout" class="btn-logout">
+            <i class="fas fa-sign-out-alt me-1"></i>Salir
+        </a>
+    </div>
+    {% endif %}
+</nav>
+
+<div class="container-fluid py-3 px-4" style="max-width:1400px;margin:0 auto">
+    <div id="alerts-container" style="position:sticky;top:70px;z-index:50"></div>
+    {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
+
+<!-- ===== PANEL EXPLICACIÓN ===== -->
+<div class="offcanvas offcanvas-end offcanvas-explain" tabindex="-1" id="explainPanel">
+    <div class="offcanvas-header">
+        <div class="offcanvas-title d-flex align-items-center gap-2">
+            <i class="fas fa-graduation-cap" style="color:var(--purple)"></i>
+            ¿Cómo funciona una Blockchain?
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body" style="padding:1rem;overflow-y:auto">
+
+        <!-- Blockchain -->
+        <div class="explain-section">
+            <div class="explain-section-header">
+                <div class="icon" style="background:rgba(79,142,247,.15);color:var(--blue)"><i class="fas fa-link"></i></div>
+                Blockchain
+                <i class="fas fa-chevron-down ms-auto" style="font-size:.65rem;color:var(--text-muted)"></i>
+            </div>
+            <div class="explain-section-body">
+                Una <strong>blockchain</strong> es una lista de bloques encadenados donde cada bloque contiene:
+                <ul class="mt-2 mb-1 ps-3" style="line-height:2">
+                    <li>Un conjunto de <strong>transacciones</strong></li>
+                    <li>El <strong>hash del bloque anterior</strong> (el "eslabón")</li>
+                    <li>Su propio <strong>hash único</strong></li>
+                </ul>
+                Si modificas un bloque, su hash cambia y <strong>rompe toda la cadena</strong> que viene después. Esto la hace inmutable.
+                <br><span class="explain-tag"><i class="fas fa-lightbulb me-1"></i>Concepto clave: inmutabilidad</span>
+            </div>
+        </div>
+
+        <!-- Hash -->
+        <div class="explain-section">
+            <div class="explain-section-header">
+                <div class="icon" style="background:rgba(62,207,110,.12);color:var(--green)"><i class="fas fa-fingerprint"></i></div>
+                Hash (SHA-256)
+                <i class="fas fa-chevron-down ms-auto" style="font-size:.65rem;color:var(--text-muted)"></i>
+            </div>
+            <div class="explain-section-body">
+                Un <strong>hash</strong> es una huella digital de datos. SHA-256 convierte cualquier texto en una cadena de 64 caracteres hexadecimales.
+                <br><br>
+                Ejemplo: el texto <code>hola</code> siempre produce el mismo hash:
+                <div class="mt-2 p-2 rounded" style="background:var(--bg-base);font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--green);word-break:break-all">
+                    b026324c6904b2a9cb4b88d6d61c81d1…
+                </div>
+                <br>
+                Cambiar <strong>una sola letra</strong> produce un hash completamente diferente. Por eso detecta cualquier manipulación.
+                <br><span class="explain-tag"><i class="fas fa-lightbulb me-1"></i>Concepto clave: determinista y unidireccional</span>
+            </div>
+        </div>
+
+        <!-- Proof of Work -->
+        <div class="explain-section">
+            <div class="explain-section-header">
+                <div class="icon" style="background:rgba(240,145,50,.12);color:var(--orange)"><i class="fas fa-hammer"></i></div>
+                Proof of Work (Minería)
+                <i class="fas fa-chevron-down ms-auto" style="font-size:.65rem;color:var(--text-muted)"></i>
+            </div>
+            <div class="explain-section-body">
+                Para añadir un bloque a la cadena hay que resolver un <strong>puzzle criptográfico</strong>: encontrar un número (el <strong>nonce</strong>) tal que el hash del bloque empiece por N ceros.
+                <br><br>
+                El servidor prueba miles de nonces hasta encontrar uno válido:
+                <div class="mt-2 mb-2" style="font-family:'JetBrains Mono',monospace;font-size:.65rem;line-height:1.8">
+                    <span style="color:var(--red)">a3f8…</span> ✗ no válido<br>
+                    <span style="color:var(--red)">c91b…</span> ✗ no válido<br>
+                    <span style="color:var(--green)">000a…</span> ✓ <strong style="color:var(--green)">¡encontrado!</strong>
+                </div>
+                Esto consume tiempo de CPU, lo que hace <strong>costoso falsificar</strong> la cadena. En BueroChain la dificultad es de <code>3 ceros</code>.
+                <br><span class="explain-tag"><i class="fas fa-lightbulb me-1"></i>Concepto clave: coste computacional = seguridad</span>
+            </div>
+        </div>
+
+        <!-- Cartera / Dirección -->
+        <div class="explain-section">
+            <div class="explain-section-header">
+                <div class="icon" style="background:rgba(62,207,110,.12);color:var(--green)"><i class="fas fa-wallet"></i></div>
+                Cartera y Dirección
+                <i class="fas fa-chevron-down ms-auto" style="font-size:.65rem;color:var(--text-muted)"></i>
+            </div>
+            <div class="explain-section-body">
+                Cada usuario tiene una <strong>dirección única</strong> que funciona como un número de cuenta bancaria, pero pública.
+                <br><br>
+                En Bitcoin real, la dirección se genera a partir de una clave pública. En BueroChain es un UUID que identifica tu cartera.
+                <br><br>
+                El <strong>balance</strong> no se guarda en ningún sitio: se calcula recorriendo todas las transacciones confirmadas de la cadena.
+                <br><span class="explain-tag"><i class="fas fa-lightbulb me-1"></i>Concepto clave: UTXO vs saldo calculado</span>
+            </div>
+        </div>
+
+        <!-- Transacciones -->
+        <div class="explain-section">
+            <div class="explain-section-header">
+                <div class="icon" style="background:rgba(139,92,246,.12);color:var(--purple)"><i class="fas fa-exchange-alt"></i></div>
+                Transacciones y Mempool
+                <i class="fas fa-chevron-down ms-auto" style="font-size:.65rem;color:var(--text-muted)"></i>
+            </div>
+            <div class="explain-section-body">
+                Al enviar BUERO, la transacción va primero a la <strong>mempool</strong> (memoria de transacciones pendientes). No es definitiva.
+                <br><br>
+                Cuando alguien mina un bloque, toma las transacciones de la mempool, las incluye en el bloque y las confirma para siempre en la cadena.
+                <br><br>
+                El minero recibe una <strong>recompensa de red</strong> (<code>+{{ mining_reward if mining_reward is defined else 10 }} BUERO</code>) como incentivo, creada de la nada. Así es como se emite nueva moneda.
+                <br><span class="explain-tag"><i class="fas fa-lightbulb me-1"></i>Concepto clave: confirmaciones y consenso</span>
+            </div>
+        </div>
+
+        <!-- Bloque génesis -->
+        <div class="explain-section">
+            <div class="explain-section-header">
+                <div class="icon" style="background:rgba(79,142,247,.15);color:var(--blue)"><i class="fas fa-star"></i></div>
+                Bloque Génesis
+                <i class="fas fa-chevron-down ms-auto" style="font-size:.65rem;color:var(--text-muted)"></i>
+            </div>
+            <div class="explain-section-body">
+                El <strong>Bloque #0</strong> es el origen de toda la cadena. Es especial porque no tiene hash anterior válido (se pone <code>0</code>).
+                <br><br>
+                Bitcoin tiene su propio bloque génesis minado por Satoshi Nakamoto el <strong>3 de enero de 2009</strong>, con el mensaje oculto: <em>"Chancellor on brink of second bailout for banks"</em> — una crítica al sistema bancario tradicional.
+                <br><span class="explain-tag"><i class="fas fa-lightbulb me-1"></i>Concepto clave: origen inmutable de la cadena</span>
+            </div>
+        </div>
+
+        <!-- NFTs -->
+        <div class="explain-section">
+            <div class="explain-section-header">
+                <div class="icon" style="background:rgba(139,92,246,.15);color:var(--purple)"><i class="fas fa-palette"></i></div>
+                NFT — Token No Fungible
+                <i class="fas fa-chevron-down ms-auto" style="font-size:.65rem;color:var(--text-muted)"></i>
+            </div>
+            <div class="explain-section-body">
+                Un <strong>NFT</strong> es un token <strong>único e irrepetible</strong>. A diferencia de los BUERO (donde 1 BUERO = 1 BUERO), cada NFT es distinto y tiene un identificador único.
+                <br><br>
+                En BueroChain cada NFT tiene un <strong>Token ID</strong> generado con SHA-256:
+                <div class="mt-1 mb-2 p-2 rounded" style="background:var(--bg-base);font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--purple);word-break:break-all">
+                    SHA256(nombre + dirección + timestamp)
+                </div>
+                Cambiar <strong>cualquier carácter</strong> del nombre produce un Token ID completamente diferente. Eso lo hace irrepetible.
+                <br><span class="explain-tag"><i class="fas fa-lightbulb me-1"></i>Concepto clave: unicidad criptográfica</span>
+            </div>
+        </div>
+
+        <!-- Arte generativo -->
+        <div class="explain-section">
+            <div class="explain-section-header">
+                <div class="icon" style="background:rgba(139,92,246,.12);color:var(--purple)"><i class="fas fa-magic"></i></div>
+                Arte generativo en NFTs
+                <i class="fas fa-chevron-down ms-auto" style="font-size:.65rem;color:var(--text-muted)"></i>
+            </div>
+            <div class="explain-section-body">
+                Cuando no subes una imagen, el arte del NFT se genera <strong>automáticamente</strong> a partir de su Token ID:
+                <ul class="mt-2 mb-2 ps-3" style="line-height:2">
+                    <li>Los primeros 18 caracteres → <strong>3 colores CSS</strong></li>
+                    <li>Los caracteres 18-20 → <strong>ángulo del gradiente</strong></li>
+                    <li>Caracteres siguientes → <strong>posición de figuras</strong></li>
+                </ul>
+                Resultado: cada NFT tiene un aspecto visual <strong>único</strong>, derivado matemáticamente de su hash. Dos NFTs con el mismo nombre pero diferente propietario tendrán arte diferente.
+                <br><br>
+                Esto es similar a cómo proyectos como <strong>CryptoPunks</strong> o <strong>Bored Apes</strong> generan sus imágenes a partir de atributos almacenados en la blockchain.
+                <br><span class="explain-tag"><i class="fas fa-lightbulb me-1"></i>Concepto clave: datos on-chain → arte determinista</span>
+            </div>
+        </div>
+
+        <!-- Minteo y propiedad -->
+        <div class="explain-section">
+            <div class="explain-section-header">
+                <div class="icon" style="background:rgba(240,145,50,.12);color:var(--orange)"><i class="fas fa-fire-alt"></i></div>
+                Minteo y propiedad
+                <i class="fas fa-chevron-down ms-auto" style="font-size:.65rem;color:var(--text-muted)"></i>
+            </div>
+            <div class="explain-section-body">
+                <strong>Mintear</strong> un NFT significa crearlo y registrarlo en la cadena. En BueroChain:
+                <ul class="mt-2 mb-2 ps-3" style="line-height:2">
+                    <li>Cuesta <code>5 BUERO</code> (tarifa de red)</li>
+                    <li>La tarifa va a <code>nft_contract</code> (se "quema")</li>
+                    <li>El NFT aparece inmediatamente en la galería</li>
+                    <li>La tarifa queda pendiente hasta que se mine un bloque</li>
+                </ul>
+                La <strong>propiedad</strong> se registra en la base de datos. Cuando transfieres un NFT, el campo <code>owner_address</code> cambia al nuevo propietario.
+                <br><br>
+                En Ethereum real, la propiedad se gestiona en un <strong>smart contract</strong> (ERC-721) y es inmutable en la blockchain.
+                <br><span class="explain-tag"><i class="fas fa-lightbulb me-1"></i>Concepto clave: propiedad digital verificable</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

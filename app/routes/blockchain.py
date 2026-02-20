@@ -3,9 +3,10 @@ from flask_login import login_required, current_user
 from app.blockchain.blockchain import Blockchain
 from app import db
 from app.models.user import User
+from config import Config
 
 bp = Blueprint('blockchain', __name__)
-blockchain = Blockchain(difficulty=4)
+blockchain = Blockchain(difficulty=Config.DIFFICULTY)
 
 @bp.route('/chain')
 def get_chain():

@@ -6,7 +6,7 @@ from config import Config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
+login_manager.login_view = 'ui.login'
 migrate = Migrate()
 
 def create_app(config_class=Config):
@@ -17,10 +17,12 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     migrate.init_app(app, db)
 
-    from app.routes import auth, blockchain, wallet
-    app.register_blueprint(auth.bp)
+    from app.routes import auth, blockchain, wallet, ui, nft
+    app.register_blueprint(ui.bp)
+    app.register_blueprint(auth.bp, url_prefix='/api')
     app.register_blueprint(blockchain.bp)
     app.register_blueprint(wallet.bp)
+    app.register_blueprint(nft.bp)
 
     return app
 

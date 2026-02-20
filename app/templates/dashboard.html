@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% block title %}Panel{% endblock %}
+
+{% block content %}
+
+<!-- ===== STATS BAR ===== -->
+<div class="row g-2 mb-3" id="statsBar">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-cubes"></i></div>
+            <div>
+                <div class="stat-value" id="statBlocks">—</div>
+                <div class="stat-label">Bloques minados</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+            <div>
+                <div class="stat-value" id="statPending">—</div>
+                <div class="stat-label">Transacciones pendientes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-exchange-alt"></i></div>
+            <div>
+                <div class="stat-value" id="statTxs">—</div>
+                <div class="stat-label">Total transacciones</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="fas fa-tachometer-alt"></i></div>
+            <div>
+                <div class="stat-value">{{ difficulty_zeros | length }}</div>
+                <div class="stat-label">Dificultad (ceros requeridos)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== FILA PRINCIPAL ===== -->
+<div class="row g-3 mb-3">
+
+    <!-- MI CARTERA -->
+    <div class="col-md-4">
+        <div class="card h-100 card-accent-green">
+            <div class="card-header">
+                <i class="fas fa-wallet me-2" style="color:var(--green)"></i>Mi Cartera
+                {% if current_user.username == 'admin' %}
+                <span class="ms-auto badge" style="background:rgba(212,160,23,.15);border:1px solid rgba(212,160,23,.4);color:var(--yellow);font-size:.68rem;border-radius:20px;padding:.2rem .55rem">
+                    <i class="fas fa-crown me-1"></i>Creador
+                </span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="balance-wrap">
+                    <div class="balance-num" id="balance">—</div>
+                    <div class="balance-ticker">BUERO</div>
+                </div>
+                <div class="wallet-addr-box">
+                    <div class="block-field-label">Dirección de cartera</div>
+                    <div class="hash-text hash-blue mt-1" id="myAddr" style="word-break:break-all">
+                        {{ current_user.wallet_address[:56] }}…
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENVIAR -->
+    <div class="col-md-4">
+        <div class="card h-100 card-accent-blue">
+            <div class="card-header">
+                <i class="fas fa-paper-plane me-2" style="color:var(--blue)"></i>Enviar BUERO
+            </div>
+            <div class="card-body d-flex flex-column gap-3 py-3">
+                <div>
+                    <label class="form-label">Destinatario</label>
+                    <select class="form-select" id="recipient">
+                        {% for u in other_users %}
+                        <option value="{{ u.wallet_address }}">{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Cantidad</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="amount"
+                               placeholder="0.00" min="0.01" step="0.01">
+                        <span class="input-group-text">BUERO</span>
+                    </div>
+                </div>
+                <button class="btn btn-send w-100 py-2 mt-auto" onclick="sendTransaction()" id="sendBtn">
+                    <i class="fas fa-paper-plane me-2"></i>Enviar
+                </button>
+                <p class="text-center mb-0" style="font-size:.72rem;color:var(--text-muted)">
+                    <i class="fas fa-info-circle me-1"></i>
+                    La transacción queda pendiente hasta que alguien mine un bloque
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MINAR -->
+    <div class="col-md-4">
+        <div class="card h-100 card-accent-orange">
+            <div class="card-header">
+                <i class="fas fa-hammer me-2" style="color:var(--orange)"></i>Minería
+                <span class="ms-auto" style="font-size:.72rem;color:var(--text-muted);font-weight:400">Proof of Work</span>
+            </div>
+            <div class="card-body d-flex flex-column align-items-center text-center py-3 gap-2">
+
+                <div class="d-flex gap-2 w-100">
+                    <div class="difficulty-pill flex-fill">
+                        <div class="block-field-label">Hash objetivo</div>
+                        <div class="difficulty-hash">{{ difficulty_zeros }}…</div>
+                    </div>
+                    <div class="difficulty-pill flex-fill">
+                        <div class="block-field-label">Recompensa</div>
+                        <div class="reward-display">+{{ mining_reward }}</div>
+                        <div style="font-size:.65rem;color:var(--text-muted)">BUERO</div>
+                    </div>
+                </div>
+
+                <p class="text-center mb-0" style="font-size:.75rem;color:var(--text-muted);line-height:1.5">
+                    Agrupa las transacciones pendientes en un nuevo bloque.<br>
+                    El servidor calcula miles de hashes hasta encontrar uno válido.
+                </p>
+
+                <button class="btn btn-mine w-100 py-2 mt-1" id="mineBtn" onclick="mineBlock()">
+                    <i class="fas fa-hammer me-2" id="mineIcon"></i>Minar Bloque
+                </button>
+
+                <div id="mineProgress" class="w-100" style="display:none">
+                    <div class="d-flex align-items-center justify-content-center gap-2 mb-1" style="color:var(--orange);font-size:.78rem">
+                        <i class="fas fa-spinner spinning"></i> Calculando hash…
+                    </div>
+                    <div class="mine-hash-preview" id="hashPreview">&nbsp;</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TRANSACCIONES PENDIENTES ===== -->
+<div class="card mb-3">
+    <div class="card-header">
+        <i class="fas fa-hourglass-half me-2" style="color:var(--orange)"></i>
+        Transacciones Pendientes
+        <span class="ms-2 badge" id="pendingCount"
+              style="background:rgba(240,145,50,.15);border:1px solid rgba(240,145,50,.3);color:var(--orange);font-size:.7rem;border-radius:20px;padding:.15rem .5rem">0</span>
+        <span class="ms-auto" style="font-size:.72rem;color:var(--text-muted);font-weight:400">
+            Esperando ser incluidas en un bloque
+        </span>
+    </div>
+    <div class="card-body p-0" id="pendingContainer">
+        <div class="d-flex align-items-center justify-content-center gap-2 py-3" id="pendingEmpty" style="font-size:.85rem;color:var(--text-main)">
+            <i class="fas fa-check-circle text-success"></i> Mempool vacía — no hay transacciones pendientes
+        </div>
+        <div id="pendingList"></div>
+    </div>
+</div>
+
+<!-- ===== CADENA DE BLOQUES ===== -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-link me-2" style="color:var(--blue)"></i>
+        Cadena de Bloques
+        <div class="d-flex align-items-center gap-3 ms-auto">
+            <!-- Leyenda -->
+            <div class="d-none d-lg-flex align-items-center gap-3" style="font-size:.72rem;color:var(--text-muted);font-weight:400">
+                <span><span class="legend-dot" style="background:var(--green)"></span>Hash del bloque</span>
+                <span><span class="legend-dot" style="background:var(--blue)"></span>Hash anterior</span>
+                <span><span class="legend-dot" style="background:var(--red)"></span>Enviado</span>
+                <span><span class="legend-dot" style="background:var(--green)"></span>Recibido</span>
+            </div>
+            <span style="font-size:.8rem;color:var(--text-muted)">
+                <strong id="blockCount" style="color:var(--text-main)">0</strong> bloques
+            </span>
+            <button class="btn-refresh" onclick="loadAll()">
+                <i class="fas fa-sync me-1"></i>Actualizar
+            </button>
+        </div>
+    </div>
+    <div class="card-body" style="padding:.75rem 1rem">
+        <div class="block-chain" id="blockChain">
+            <div class="d-flex align-items-center gap-2 text-muted" style="font-size:.85rem;padding:.5rem">
+                <i class="fas fa-spinner spinning"></i> Cargando cadena…
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const myAddress  = {{ current_user.wallet_address | tojson }};
+const myUsername = {{ current_user.username | tojson }};
+const allUsers   = {{ all_users_json | safe }};
+const miningReward = {{ mining_reward }};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function userByAddress(addr) {
+    const u = allUsers.find(u => u.wallet_address === addr);
+    return u ? u.username : addr.substring(0,10) + '…';
+}
+function shortHash(h, n=18) {
+    if (!h || h === '0') return '0';
+    return h.substring(0,n) + '…' + h.substring(h.length-6);
+}
+function showAlert(msg, type='success') {
+    const d = document.createElement('div');
+    d.className = `alert alert-${type} alert-dismissible fade show mb-2`;
+    d.style.cssText = 'font-size:.85rem;padding:.6rem 1rem';
+    d.innerHTML = msg + `<button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>`;
+    document.getElementById('alerts-container').appendChild(d);
+    setTimeout(() => { try { d.remove(); } catch(e){} }, 6000);
+}
+
+// ─── Balance ──────────────────────────────────────────────────────────────────
+async function loadBalance() {
+    try {
+        const r = await fetch(`/balance/${myAddress}`);
+        const d = await r.json();
+        const el = document.getElementById('balance');
+        const newVal = parseFloat(d.balance).toFixed(2);
+        if (el.textContent !== newVal && el.textContent !== '—') {
+            el.classList.add('pulse');
+            setTimeout(() => el.classList.remove('pulse'), 4500);
+        }
+        el.textContent = newVal;
+    } catch(e) {}
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+function updateStats(chain, pending) {
+    document.getElementById('statBlocks').textContent = chain.length;
+    document.getElementById('statPending').textContent = pending.length;
+    const total = chain.reduce((acc, b) => acc + b.transactions.length, 0);
+    document.getElementById('statTxs').textContent = total;
+}
+
+// ─── Cadena + Pendientes ──────────────────────────────────────────────────────
+async function loadChain() {
+    try {
+        const r = await fetch('/chain');
+        const d = await r.json();
+        renderChain(d.chain);
+        renderPending(d.pending_transactions);
+        document.getElementById('blockCount').textContent = d.chain.length;
+        updateStats(d.chain, d.pending_transactions);
+    } catch(e) {}
+}
+
+function renderPending(txs) {
+    const count = document.getElementById('pendingCount');
+    const empty = document.getElementById('pendingEmpty');
+    const list  = document.getElementById('pendingList');
+    count.textContent = txs.length;
+    if (txs.length === 0) {
+        empty.style.display = '';
+        list.innerHTML = '';
+        return;
+    }
+    empty.style.display = 'none';
+    list.innerHTML = txs.map(tx => {
+        const isNet = tx.from === 'network';
+        const fromLabel = isNet
+            ? `<span class="badge-net"><i class="fas fa-network-wired me-1"></i>Red</span>`
+            : `<span class="tx-from">${userByAddress(tx.from)}</span>`;
+        return `
+        <div class="tx-row">
+            ${fromLabel}
+            <i class="fas fa-long-arrow-alt-right" style="color:var(--border-hi);font-size:.8rem"></i>
+            <span class="tx-to">${userByAddress(tx.to)}</span>
+            <span class="tx-amount">${tx.amount} BUERO</span>
+        </div>`;
+    }).join('');
+}
+
+function renderChain(chain) {
+    const c = document.getElementById('blockChain');
+    if (!chain.length) { c.innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem">Sin bloques</p>'; return; }
+
+    c.innerHTML = chain.map((b, i) => {
+        const txHtml = b.transactions.length === 0
+            ? `<div style="color:var(--text-muted);font-size:.68rem"><i class="fas fa-minus me-1"></i>Sin transacciones</div>`
+            : b.transactions.map(tx => {
+                const isNet  = tx.from === 'network';
+                const fLabel = isNet
+                    ? `<span class="badge-net" style="font-size:.62rem">Red</span>`
+                    : `<span class="tx-from" style="font-size:.68rem">${userByAddress(tx.from)}</span>`;
+                const tLabel = `<span class="tx-to" style="font-size:.68rem">${userByAddress(tx.to)}</span>`;
+                return `<div class="d-flex align-items-center gap-1 mt-1">
+                    ${fLabel}
+                    <i class="fas fa-arrow-right" style="color:var(--border-hi);font-size:.5rem"></i>
+                    ${tLabel}
+                    <span class="ms-auto" style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--text-muted)">${tx.amount}B</span>
+                </div>`;
+            }).join('');
+
+        const ts = new Date(b.timestamp * 1000).toLocaleTimeString('es-ES');
+        const isGenesis = i === 0;
+
+        return `
+        ${i > 0 ? `<div class="chain-arrow"><i class="fas fa-chevron-right"></i></div>` : ''}
+        <div class="card block-card ${isGenesis ? 'genesis-border' : ''}">
+            <div class="card-header py-2">
+                <span class="block-index-badge">#${b.index}</span>
+                ${isGenesis
+                    ? `<span class="ms-2 badge" style="background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.35);color:var(--blue);font-size:.62rem;border-radius:10px">Génesis</span>`
+                    : `<span class="ms-auto" style="font-size:.65rem;color:var(--text-muted)">${ts}</span>`
+                }
+            </div>
+            <div class="card-body p-2" style="font-size:.72rem">
+                <div class="mb-2">
+                    <div class="block-field-label">Hash del bloque</div>
+                    <div class="hash-text hash-green">${shortHash(b.hash, 20)}</div>
+                </div>
+                <div class="mb-2">
+                    <div class="block-field-label">Hash anterior</div>
+                    <div class="hash-text hash-blue">${b.previous_hash === '0' ? '000…000 (Génesis)' : shortHash(b.previous_hash, 20)}</div>
+                </div>
+                <div class="mb-2 d-flex gap-2">
+                    <div>
+                        <div class="block-field-label">Nonce</div>
+                        <span class="nonce-badge">${b.nonce.toLocaleString('es-ES')}</span>
+                    </div>
+                    <div>
+                        <div class="block-field-label">Txs</div>
+                        <span class="nonce-badge">${b.transactions.length}</span>
+                    </div>
+                </div>
+                <div style="border-top:1px solid var(--border);padding-top:.4rem">
+                    <div class="block-field-label">Transacciones</div>
+                    ${txHtml}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    // scroll al último bloque
+    c.scrollLeft = c.scrollWidth;
+}
+
+// ─── Enviar transacción ───────────────────────────────────────────────────────
+async function sendTransaction() {
+    const recipient = document.getElementById('recipient').value;
+    const amount    = parseFloat(document.getElementById('amount').value);
+    if (!amount || amount <= 0) {
+        showAlert('<i class="fas fa-exclamation-triangle me-2"></i>Introduce una cantidad válida.', 'danger');
+        return;
+    }
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner spinning me-2"></i>Enviando…';
+    try {
+        const r = await fetch('/transaction/new', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({recipient, amount})
+        });
+        const d = await r.json();
+        if (r.ok) {
+            showAlert(`<i class="fas fa-check-circle me-2"></i>Transacción añadida. Mina un bloque para confirmarla.`);
+            document.getElementById('amount').value = '';
+            loadChain();
+        } else {
+            showAlert(`<i class="fas fa-times-circle me-2"></i>${d.error}`, 'danger');
+        }
+    } catch(e) {
+        showAlert('<i class="fas fa-times-circle me-2"></i>Error de red.', 'danger');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviar';
+    }
+}
+
+// ─── Minar ────────────────────────────────────────────────────────────────────
+// Animate a fake hash preview during mining
+let hashAnimInterval = null;
+function startHashAnim() {
+    const chars = '0123456789abcdef';
+    const el = document.getElementById('hashPreview');
+    hashAnimInterval = setInterval(() => {
+        el.textContent = Array.from({length: 64}, () => chars[Math.floor(Math.random()*16)]).join('');
+    }, 80);
+}
+function stopHashAnim() {
+    clearInterval(hashAnimInterval);
+    const el = document.getElementById('hashPreview');
+    if (el) el.textContent = '';
+}
+
+async function mineBlock() {
+    const btn  = document.getElementById('mineBtn');
+    const prog = document.getElementById('mineProgress');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner spinning me-2"></i>Minando…';
+    prog.style.display = '';
+    startHashAnim();
+    try {
+        const r = await fetch('/mine');
+        const d = await r.json();
+        if (r.ok) {
+            showAlert(`<i class="fas fa-hammer me-2"></i>¡Bloque minado! Recompensa: <strong>+${d.reward} BUERO</strong>`);
+            loadBalance();
+            loadChain();
+        } else {
+            showAlert(`<i class="fas fa-times-circle me-2"></i>${d.error || 'Error al minar'}`, 'danger');
+        }
+    } catch(e) {
+        showAlert('<i class="fas fa-times-circle me-2"></i>Error de red.', 'danger');
+    } finally {
+        stopHashAnim();
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-hammer me-2"></i>Minar Bloque';
+        prog.style.display = 'none';
+    }
+}
+
+// ─── Cargar todo ─────────────────────────────────────────────────────────────
+function loadAll() { loadBalance(); loadChain(); }
+
+loadAll();
+setInterval(loadAll, 6000);
+</script>
+{% endblock %}

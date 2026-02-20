@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Iniciar Sesión{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center" style="margin-top:6rem">
+    <div class="col-md-4 col-lg-3">
+
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center mb-3"
+                 style="width:64px;height:64px;background:linear-gradient(135deg,var(--blue),var(--purple));
+                        border-radius:16px;font-size:1.6rem;box-shadow:0 0 30px rgba(79,142,247,.4)">
+                <i class="fas fa-link" style="color:#fff"></i>
+            </div>
+            <h2 class="fw-bold mb-1" style="font-size:1.6rem;letter-spacing:.01em">BueroChain</h2>
+            <p style="color:var(--text-muted);font-size:.82rem">Blockchain Educativa · Clase Demo</p>
+        </div>
+
+        <div class="card card-accent-blue">
+            <div class="card-header">
+                <i class="fas fa-sign-in-alt me-2" style="color:var(--blue)"></i>Iniciar Sesión
+            </div>
+            <div class="card-body p-4">
+                {% if error %}
+                <div class="alert alert-danger py-2 mb-3" style="font-size:.84rem">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+                </div>
+                {% endif %}
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Usuario</label>
+                        <input type="text" class="form-control" name="username"
+                               placeholder="admin / jnaranjo / dorgaz" autofocus required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-send w-100 py-2">
+                        <i class="fas fa-sign-in-alt me-2"></i>Entrar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <p class="text-center mt-3" style="font-size:.75rem;color:var(--text-muted)">
+            <i class="fas fa-graduation-cap me-1"></i>
+            Proyecto educativo · No usar en producción
+        </p>
+    </div>
+</div>
+{% endblock %}

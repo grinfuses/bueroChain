@@ -1,0 +1,582 @@
+{% extends 'base.html' %}
+{% block title %}NFTs{% endblock %}
+
+{% block content %}
+
+<!-- ===== CABECERA ===== -->
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+        <h5 class="mb-0 fw-bold" style="letter-spacing:.01em">
+            <i class="fas fa-palette me-2" style="color:var(--purple)"></i>Galería NFT
+        </h5>
+        <p class="mb-0" style="font-size:.78rem;color:var(--text-muted)">
+            Tokens No Fungibles en la cadena BueroChain
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/dashboard" class="btn-refresh" style="text-decoration:none;display:inline-flex;align-items:center;gap:.4rem">
+            <i class="fas fa-arrow-left"></i> Volver al panel
+        </a>
+        <button class="btn-explain" onclick="openMintModal()" style="display:inline-flex;align-items:center;gap:.4rem">
+            <i class="fas fa-plus"></i> Mintear NFT
+        </button>
+    </div>
+</div>
+
+<!-- ===== STATS ===== -->
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="fas fa-images"></i></div>
+            <div>
+                <div class="stat-value" id="statTotal">—</div>
+                <div class="stat-label">NFTs totales</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-user-check"></i></div>
+            <div>
+                <div class="stat-value" id="statMine">—</div>
+                <div class="stat-label">Mis NFTs</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="fas fa-fire-alt"></i></div>
+            <div>
+                <div class="stat-value">{{ mint_fee }} <span style="font-size:.9rem">B</span></div>
+                <div class="stat-label">Coste de minteo</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-fingerprint"></i></div>
+            <div>
+                <div class="stat-value" style="font-size:.85rem;line-height:1.2">Único</div>
+                <div class="stat-label">Cada NFT es irrepetible</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== GALERÍA ===== -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-th me-2" style="color:var(--purple)"></i>Colección
+        <span class="ms-2 badge" id="galleryCount"
+              style="background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.35);color:var(--purple);font-size:.7rem;border-radius:20px;padding:.15rem .5rem">0</span>
+        <button class="btn-refresh ms-auto" onclick="loadNFTs()">
+            <i class="fas fa-sync me-1"></i>Actualizar
+        </button>
+    </div>
+    <div class="card-body" style="padding:1rem">
+        <div id="nftEmpty" class="text-center py-5" style="display:none">
+            <div style="font-size:3rem;margin-bottom:.75rem">🎨</div>
+            <p style="color:var(--text-muted);font-size:.9rem">Aún no hay NFTs en la cadena.<br>
+               ¡Sé el primero en mintear uno!</p>
+            <button class="btn-explain mt-2" onclick="openMintModal()">
+                <i class="fas fa-plus me-2"></i>Mintear el primer NFT
+            </button>
+        </div>
+        <div id="nftGrid" class="row g-3"></div>
+    </div>
+</div>
+
+<!-- ===== MODAL MINTEAR ===== -->
+<div class="modal fade" id="mintModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px">
+        <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);padding:1rem 1.25rem">
+                <h6 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i class="fas fa-palette" style="color:var(--purple)"></i> Mintear nuevo NFT
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:1.25rem">
+
+                <!-- Preview arte -->
+                <div class="text-center mb-3">
+                    <div style="position:relative;display:inline-block">
+                        <div id="artPreview"
+                             style="width:140px;height:140px;border-radius:14px;border:2px solid var(--border);
+                                    overflow:hidden;background:var(--bg-base);position:relative">
+                        </div>
+                        <label for="imageInput"
+                               style="position:absolute;bottom:6px;right:6px;width:30px;height:30px;
+                                      background:rgba(0,0,0,.8);border:1px solid var(--border);border-radius:8px;
+                                      display:flex;align-items:center;justify-content:center;cursor:pointer;
+                                      font-size:.75rem;color:var(--text-muted);transition:all .2s"
+                               title="Subir imagen"
+                               onmouseover="this.style.borderColor='var(--purple)';this.style.color='var(--purple)'"
+                               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+                            <i class="fas fa-camera"></i>
+                        </label>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/png,image/jpeg,image/gif,image/webp"
+                           style="display:none" onchange="onImageSelected(event)">
+                    <p id="artHint" style="font-size:.68rem;color:var(--text-muted);margin-top:.5rem;margin-bottom:0">
+                        Arte generado por hash ·
+                        <span style="color:var(--purple);cursor:pointer"
+                              onclick="document.getElementById('imageInput').click()">
+                            <i class="fas fa-upload me-1"></i>subir imagen propia
+                        </span>
+                    </p>
+                    <p id="imageSelectedHint" style="font-size:.68rem;color:var(--green);margin-top:.3rem;margin-bottom:0;display:none">
+                        <i class="fas fa-check-circle me-1"></i><span id="imageSelectedName"></span>
+                        <span style="color:var(--text-muted);cursor:pointer;margin-left:.5rem"
+                              onclick="clearImage()">✕ quitar</span>
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Nombre del NFT <span style="color:var(--red)">*</span></label>
+                    <input type="text" class="form-control" id="mintName" maxlength="100"
+                           placeholder="Ej: Mi primer NFT, CryptoGato #1…"
+                           oninput="onNameInput()">
+                    <div style="font-size:.7rem;color:var(--text-muted);margin-top:.25rem">
+                        <span id="nameCount">0</span>/100 caracteres
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descripción <span style="color:var(--text-muted)">(opcional)</span></label>
+                    <textarea class="form-control" id="mintDesc" rows="2" maxlength="300"
+                              placeholder="Describe tu NFT…"
+                              style="resize:none" oninput="descCount()"></textarea>
+                    <div style="font-size:.7rem;color:var(--text-muted);margin-top:.25rem">
+                        <span id="descCounter">0</span>/300 caracteres
+                    </div>
+                </div>
+
+                <div class="p-2 rounded mb-3"
+                     style="background:rgba(240,145,50,.08);border:1px solid rgba(240,145,50,.25);font-size:.8rem">
+                    <i class="fas fa-fire-alt me-2" style="color:var(--orange)"></i>
+                    <span style="color:var(--text-muted)">Coste:</span>
+                    <strong style="color:var(--orange);font-family:'JetBrains Mono',monospace">
+                        {{ mint_fee }} BUERO
+                    </strong>
+                    <span style="color:var(--text-muted);font-size:.7rem"> — queda pendiente hasta minar</span>
+                </div>
+
+                <div id="mintError" class="alert alert-danger py-2 mb-0"
+                     style="display:none;font-size:.82rem"></div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid var(--border);padding:.75rem 1.25rem;gap:.5rem">
+                <button type="button" class="btn-logout" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-explain" id="mintBtn" onclick="mintNFT()"
+                        style="flex:1;justify-content:center">
+                    <i class="fas fa-hammer me-2"></i>Mintear NFT
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL VER NFT ===== -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:440px">
+        <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);padding:1rem 1.25rem">
+                <h6 class="modal-title fw-bold" id="detailTitle"></h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:1.25rem">
+                <div id="detailArtWrap"
+                     style="width:100%;height:220px;border-radius:12px;overflow:hidden;margin-bottom:1rem;
+                            border:1px solid var(--border);position:relative"></div>
+                <div id="detailDesc"
+                     style="font-size:.82rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.6"></div>
+                <table style="width:100%;font-size:.75rem;border-collapse:collapse">
+                    <tr>
+                        <td style="color:var(--text-muted);padding:.3rem 0;vertical-align:top">Token ID</td>
+                        <td class="hash-text hash-green" id="detailTokenId"
+                            style="text-align:right;word-break:break-all"></td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-muted);padding:.3rem 0">Creador</td>
+                        <td style="text-align:right;color:var(--text-main)" id="detailCreator"></td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-muted);padding:.3rem 0">Propietario</td>
+                        <td style="text-align:right;color:var(--green);font-weight:600" id="detailOwner"></td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-muted);padding:.3rem 0">Fecha</td>
+                        <td style="text-align:right;color:var(--text-main)" id="detailDate"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL TRANSFERIR ===== -->
+<div class="modal fade" id="transferModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);padding:1rem 1.25rem">
+                <h6 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i class="fas fa-exchange-alt" style="color:var(--blue)"></i> Transferir NFT
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:1.25rem">
+                <div id="transferNftPreview" class="d-flex align-items-center gap-3 mb-3 p-3 rounded"
+                     style="background:var(--bg-base);border:1px solid var(--border)"></div>
+                <div class="mb-3">
+                    <label class="form-label">Transferir a</label>
+                    <select class="form-select" id="transferRecipient">
+                        {% for u in other_users %}
+                        <option value="{{ u.wallet_address }}">{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="transferError" class="alert alert-danger py-2 mb-0"
+                     style="display:none;font-size:.82rem"></div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid var(--border);padding:.75rem 1.25rem;gap:.5rem">
+                <button type="button" class="btn-logout" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-send" id="transferBtn" onclick="transferNFT()"
+                        style="flex:1;border-radius:8px;font-weight:600;padding:.45rem">
+                    <i class="fas fa-paper-plane me-2"></i>Transferir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+.nft-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+    cursor: pointer;
+}
+.nft-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0,0,0,.45);
+    border-color: var(--border-hi);
+}
+.nft-art-thumb {
+    width: 100%;
+    height: 160px;
+    position: relative;
+    overflow: hidden;
+}
+.nft-art-thumb img { width:100%;height:100%;object-fit:cover; }
+.nft-art-pattern { position:absolute;inset:0;opacity:.18; }
+.nft-token-id {
+    font-family:'JetBrains Mono',monospace;
+    font-size:.6rem;color:var(--text-muted);word-break:break-all;
+}
+.owner-pill {
+    display:inline-flex;align-items:center;gap:.3rem;
+    background:rgba(62,207,110,.1);border:1px solid rgba(62,207,110,.25);
+    color:var(--green);border-radius:20px;font-size:.68rem;padding:.1rem .45rem;font-weight:600;
+}
+.mine-pill { background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.3);color:var(--purple); }
+.btn-transfer {
+    background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--blue);
+    border-radius:7px;font-size:.75rem;font-weight:600;padding:.3rem .6rem;
+    cursor:pointer;transition:all .2s;width:100%;margin-top:.4rem;
+}
+.btn-transfer:hover { background:rgba(79,142,247,.2);border-color:var(--blue); }
+</style>
+
+<script>
+const otherUsers = [
+    {% for u in other_users %}
+    { username: {{ u.username | tojson }}, wallet_address: {{ u.wallet_address | tojson }} },
+    {% endfor %}
+];
+
+let transferTokenId   = null;
+let mintModalInst     = null;
+let transferModalInst = null;
+let detailModalInst   = null;
+let selectedImageFile = null;
+
+// ─── NFT Art Generator ────────────────────────────────────────────────────────
+function nftGradient(tokenId) {
+    const c1    = '#' + tokenId.substring(0, 6);
+    const c2    = '#' + tokenId.substring(6, 12);
+    const c3    = '#' + tokenId.substring(12, 18);
+    const angle = parseInt(tokenId.substring(18, 20), 16) % 360;
+    return `linear-gradient(${angle}deg, ${c1} 0%, ${c2} 55%, ${c3} 100%)`;
+}
+function nftSVGOverlay(tokenId) {
+    const n = parseInt(tokenId.substring(20, 22), 16) % 5 + 3;
+    const col = '#' + tokenId.substring(22, 28);
+    let circles = '';
+    for (let i = 0; i < n; i++) {
+        const cx = parseInt(tokenId.substring(i*2, i*2+2), 16) % 100;
+        const cy = parseInt(tokenId.substring(i*2+2, i*2+4), 16) % 100;
+        const r  = parseInt(tokenId.substring(i*2+4, i*2+6), 16) % 30 + 8;
+        circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}"/>`;
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">${circles}</svg>`;
+}
+function applyGenerativeArt(el, tokenId) {
+    el.style.background = nftGradient(tokenId);
+    el.innerHTML = `<div class="nft-art-pattern">${nftSVGOverlay(tokenId)}</div>`;
+}
+function applyArt(el, nft) {
+    if (nft.image_url) {
+        el.style.background = '#000';
+        el.innerHTML = `<img src="${nft.image_url}" alt="${nft.name}" loading="lazy">`;
+    } else {
+        applyGenerativeArt(el, nft.token_id);
+    }
+}
+
+// ─── Image upload ─────────────────────────────────────────────────────────────
+function onImageSelected(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    selectedImageFile = file;
+    document.getElementById('imageSelectedName').textContent = file.name;
+    document.getElementById('imageSelectedHint').style.display = '';
+    document.getElementById('artHint').style.display = 'none';
+    const reader = new FileReader();
+    reader.onload = e => {
+        const p = document.getElementById('artPreview');
+        p.style.background = '#000';
+        p.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+    };
+    reader.readAsDataURL(file);
+}
+function clearImage() {
+    selectedImageFile = null;
+    document.getElementById('imageInput').value = '';
+    document.getElementById('imageSelectedHint').style.display = 'none';
+    document.getElementById('artHint').style.display = '';
+    updateArtPreview();
+}
+function onNameInput() {
+    document.getElementById('nameCount').textContent = document.getElementById('mintName').value.length;
+    if (!selectedImageFile) updateArtPreview();
+}
+function updateArtPreview() {
+    const name    = document.getElementById('mintName').value;
+    const preview = document.getElementById('artPreview');
+    if (name.trim()) {
+        const fakeId = Array.from(name).map(c =>
+            c.charCodeAt(0).toString(16).padStart(2,'0')
+        ).join('').padEnd(64,'a').substring(0,64);
+        applyGenerativeArt(preview, fakeId);
+    } else {
+        preview.style.background = 'var(--bg-base)';
+        preview.innerHTML = '';
+    }
+}
+function descCount() {
+    document.getElementById('descCounter').textContent = document.getElementById('mintDesc').value.length;
+}
+
+// ─── Load NFTs ────────────────────────────────────────────────────────────────
+async function loadNFTs() {
+    try {
+        const r    = await fetch('/nfts/data');
+        const nfts = await r.json();
+        renderGallery(nfts);
+    } catch(e) {}
+}
+
+function renderGallery(nfts) {
+    const grid  = document.getElementById('nftGrid');
+    const empty = document.getElementById('nftEmpty');
+    document.getElementById('galleryCount').textContent = nfts.length;
+    document.getElementById('statTotal').textContent    = nfts.length;
+    document.getElementById('statMine').textContent     = nfts.filter(n => n.is_mine).length;
+
+    if (!nfts.length) {
+        grid.innerHTML = '';
+        empty.style.display = '';
+        return;
+    }
+    empty.style.display = 'none';
+
+    grid.innerHTML = nfts.map(n => {
+        const ts  = new Date(n.created_at * 1000).toLocaleDateString('es-ES');
+        const desc = n.description
+            ? `<p class="mb-1" style="font-size:.76rem;color:var(--text-muted);line-height:1.5;
+                -webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">
+                ${n.description}</p>`
+            : '';
+        const ownerPill = n.is_mine
+            ? `<span class="owner-pill mine-pill"><i class="fas fa-crown me-1"></i>Tuyo</span>`
+            : `<span class="owner-pill"><i class="fas fa-user me-1"></i>${n.owner_name}</span>`;
+        const transferBtn = n.is_mine
+            ? `<button class="btn-transfer"
+                   onclick="event.stopPropagation();openTransfer('${n.token_id}','${n.name}')">
+                   <i class="fas fa-exchange-alt me-1"></i>Transferir
+               </button>`
+            : '';
+        const dataAttr = encodeURIComponent(JSON.stringify(n));
+        return `
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="nft-card" onclick="openDetail('${dataAttr}')">
+                <div class="nft-art-thumb" id="art-${n.token_id}"></div>
+                <div style="padding:.75rem">
+                    <div class="d-flex align-items-start justify-content-between gap-1 mb-1">
+                        <span class="fw-bold" style="font-size:.85rem;line-height:1.2">${n.name}</span>
+                        ${ownerPill}
+                    </div>
+                    ${desc}
+                    <div class="nft-token-id mb-1">#${n.token_id.substring(0,20)}…</div>
+                    <div style="font-size:.65rem;color:var(--text-muted)">
+                        <i class="fas fa-paint-brush me-1"></i>${n.creator_name} · ${ts}
+                    </div>
+                    ${transferBtn}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    nfts.forEach(n => {
+        const el = document.getElementById('art-' + n.token_id);
+        if (el) applyArt(el, n);
+    });
+}
+
+// ─── Detail modal ─────────────────────────────────────────────────────────────
+function openDetail(encoded) {
+    const n = JSON.parse(decodeURIComponent(encoded));
+    document.getElementById('detailTitle').textContent   = n.name;
+    document.getElementById('detailTokenId').textContent = n.token_id;
+    document.getElementById('detailCreator').textContent = n.creator_name;
+    document.getElementById('detailOwner').textContent   = n.owner_name;
+    document.getElementById('detailDate').textContent    =
+        new Date(n.created_at * 1000).toLocaleString('es-ES');
+    document.getElementById('detailDesc').textContent    = n.description || 'Sin descripción';
+
+    const artWrap = document.getElementById('detailArtWrap');
+    if (n.image_url) {
+        artWrap.style.background = '#000';
+        artWrap.innerHTML = `<img src="${n.image_url}"
+            style="width:100%;height:100%;object-fit:contain">`;
+    } else {
+        artWrap.innerHTML = '';
+        applyGenerativeArt(artWrap, n.token_id);
+    }
+
+    detailModalInst = detailModalInst || new bootstrap.Modal(document.getElementById('detailModal'));
+    detailModalInst.show();
+}
+
+// ─── Mint ─────────────────────────────────────────────────────────────────────
+function openMintModal() {
+    document.getElementById('mintName').value  = '';
+    document.getElementById('mintDesc').value  = '';
+    document.getElementById('mintError').style.display = 'none';
+    document.getElementById('nameCount').textContent   = '0';
+    document.getElementById('descCounter').textContent = '0';
+    clearImage();
+    mintModalInst = mintModalInst || new bootstrap.Modal(document.getElementById('mintModal'));
+    mintModalInst.show();
+}
+
+async function mintNFT() {
+    const name  = document.getElementById('mintName').value.trim();
+    const desc  = document.getElementById('mintDesc').value.trim();
+    const errEl = document.getElementById('mintError');
+    errEl.style.display = 'none';
+
+    if (!name) { errEl.textContent = 'El nombre es obligatorio.'; errEl.style.display = ''; return; }
+
+    const btn = document.getElementById('mintBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner spinning me-2"></i>Minteando…';
+
+    try {
+        let response;
+        if (selectedImageFile) {
+            const form = new FormData();
+            form.append('name', name);
+            form.append('description', desc);
+            form.append('image', selectedImageFile);
+            response = await fetch('/nft/mint', { method: 'POST', body: form });
+        } else {
+            response = await fetch('/nft/mint', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description: desc })
+            });
+        }
+        const d = await response.json();
+        if (response.ok) {
+            mintModalInst.hide();
+            showAlert(`<i class="fas fa-palette me-2"></i>¡NFT <strong>${name}</strong> minteado. Mina un bloque para confirmar la tarifa.`);
+            loadNFTs();
+        } else {
+            errEl.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${d.error}`;
+            errEl.style.display = '';
+        }
+    } catch(e) {
+        errEl.textContent = 'Error de red.';
+        errEl.style.display = '';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-hammer me-2"></i>Mintear NFT';
+    }
+}
+
+// ─── Transfer ─────────────────────────────────────────────────────────────────
+function openTransfer(tokenId, name) {
+    transferTokenId = tokenId;
+    document.getElementById('transferError').style.display = 'none';
+    const preview = document.getElementById('transferNftPreview');
+    preview.innerHTML = `
+        <div id="transferArt" style="width:52px;height:52px;border-radius:8px;flex-shrink:0;overflow:hidden;position:relative"></div>
+        <div>
+            <div class="fw-bold" style="font-size:.85rem">${name}</div>
+            <div class="nft-token-id">#${tokenId.substring(0,24)}…</div>
+        </div>`;
+    setTimeout(() => applyGenerativeArt(document.getElementById('transferArt'), tokenId), 0);
+    transferModalInst = transferModalInst || new bootstrap.Modal(document.getElementById('transferModal'));
+    transferModalInst.show();
+}
+
+async function transferNFT() {
+    const recipient = document.getElementById('transferRecipient').value;
+    const errEl     = document.getElementById('transferError');
+    errEl.style.display = 'none';
+    const btn = document.getElementById('transferBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner spinning me-2"></i>Transfiriendo…';
+    try {
+        const r = await fetch('/nft/transfer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token_id: transferTokenId, recipient })
+        });
+        const d = await r.json();
+        if (r.ok) {
+            transferModalInst.hide();
+            showAlert(`<i class="fas fa-exchange-alt me-2"></i>${d.message}`);
+            loadNFTs();
+        } else {
+            errEl.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${d.error}`;
+            errEl.style.display = '';
+        }
+    } catch(e) {
+        errEl.textContent = 'Error de red.';
+        errEl.style.display = '';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Transferir';
+    }
+}
+
+loadNFTs();
+</script>
+{% endblock %}

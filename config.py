@@ -9,7 +9,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Blockchain configuration
-    DIFFICULTY = 4  # Number of leading zeros required in block hash
+    DIFFICULTY = 3  # Number of leading zeros required in block hash (3 = rápido para demo)
     BLOCK_REWARD = 10  # Reward for mining a new block
     MINING_TIMEOUT = 30  # Timeout for mining in seconds
     
