@@ -6,7 +6,10 @@ from app.models.user import User
 from config import Config
 
 bp = Blueprint('blockchain', __name__)
-blockchain = Blockchain(difficulty=Config.DIFFICULTY)
+blockchain = Blockchain(
+    difficulty=Config.DIFFICULTY,
+    mining_reward=Config.BLOCK_REWARD,
+)
 
 @bp.route('/chain')
 def get_chain():
@@ -15,10 +18,15 @@ def get_chain():
 @bp.route('/mine')
 @login_required
 def mine():
+    if not current_user.is_super_admin:
+        return jsonify({
+            "error": "Solo el super administrador puede minar bloques",
+        }), 403
+
     blockchain.mine_pending_transactions(current_user.wallet_address)
     return jsonify({
         "message": "Block mined successfully",
-        "reward": blockchain.mining_reward
+        "reward": blockchain.mining_reward,
     })
 
 @bp.route('/transaction/new', methods=['POST'])

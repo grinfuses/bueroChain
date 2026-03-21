@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify
 from flask_login import login_required, current_user
+from app.routes.blockchain import blockchain
 
 bp = Blueprint('wallet', __name__)
 
@@ -8,7 +9,7 @@ bp = Blueprint('wallet', __name__)
 def get_wallet():
     return jsonify({
         "address": current_user.wallet_address,
-        "balance": current_user.get_wallet().get_balance()
+        "balance": blockchain.get_balance(current_user.wallet_address),
     })
 
 @bp.route('/wallet/transactions')

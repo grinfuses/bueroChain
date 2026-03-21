@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from app.wallet.wallet import Wallet
 from cryptography.hazmat.primitives import serialization
+from config import Config
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -41,11 +42,17 @@ class User(UserMixin, db.Model):
             "public_key": self.wallet_public_key
         })
 
+    @property
+    def is_super_admin(self):
+        name = (getattr(Config, 'SUPER_ADMIN_USERNAME', None) or 'jnaranjo').strip().lower()
+        return self.username.strip().lower() == name
+
     def to_dict(self):
         return {
             "id": self.id,
             "username": self.username,
             "email": self.email,
             "wallet_address": self.wallet_address,
-            "is_active": self.is_active
+            "is_active": self.is_active,
+            "is_super_admin": self.is_super_admin,
         } 

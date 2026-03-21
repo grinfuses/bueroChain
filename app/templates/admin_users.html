@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios · Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1 fw-bold" style="letter-spacing:.02em">
+            <i class="fas fa-user-shield me-2" style="color:var(--yellow)"></i>Administración de usuarios
+        </h1>
+        <p class="mb-0" style="color:var(--text-muted);font-size:.85rem">
+            Solo el super admin puede crear cuentas nuevas.
+        </p>
+    </div>
+    <a href="{{ url_for('ui.dashboard') }}" class="btn btn-outline-secondary btn-sm" style="border-color:var(--border);color:var(--text-muted)">
+        <i class="fas fa-arrow-left me-1"></i>Volver al panel
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card h-100 card-accent-orange">
+            <div class="card-header">
+                <i class="fas fa-user-plus me-2" style="color:var(--orange)"></i>Crear usuario
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('ui.admin_create_user_post') }}">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de usuario</label>
+                        <input type="text" class="form-control" name="username" required autocomplete="off"
+                               placeholder="ej. alumno1" maxlength="80">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Correo</label>
+                        <input type="email" class="form-control" name="email" required autocomplete="off"
+                               placeholder="alumno@buero.local" maxlength="120">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña inicial</label>
+                        <input type="password" class="form-control" name="password" required autocomplete="new-password"
+                               placeholder="La compartes tú con el alumno">
+                    </div>
+                    <button type="submit" class="btn w-100 py-2" style="background:linear-gradient(135deg,var(--orange),#c96a1a);color:#fff;border:none;font-weight:600">
+                        <i class="fas fa-check me-2"></i>Crear usuario
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card h-100" style="background:var(--bg-card);border:1px solid var(--border)">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="fas fa-users" style="color:var(--blue)"></i>
+                <span>Usuarios registrados ({{ users|length }})</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0" style="--bs-table-bg:transparent;font-size:.85rem">
+                        <thead style="border-bottom:1px solid var(--border)">
+                            <tr>
+                                <th class="ps-3">Usuario</th>
+                                <th>Correo</th>
+                                <th>Cartera</th>
+                                <th class="pe-3 text-end">Rol</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in users %}
+                            <tr>
+                                <td class="ps-3 fw-semibold">{{ u.username }}</td>
+                                <td style="color:var(--text-muted)">{{ u.email }}</td>
+                                <td>
+                                    <span class="hash-text hash-blue" style="font-size:.72rem">{{ u.wallet_address[:20] }}…</span>
+                                </td>
+                                <td class="pe-3 text-end">
+                                    {% if u.is_super_admin %}
+                                    <span class="badge" style="background:rgba(212,160,23,.15);border:1px solid rgba(212,160,23,.4);color:var(--yellow);font-size:.65rem">Super admin</span>
+                                    {% elif u.username == 'admin' %}
+                                    <span class="badge" style="background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.35);color:var(--blue);font-size:.65rem">Creador</span>
+                                    {% else %}
+                                    <span style="color:var(--text-muted);font-size:.75rem">—</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p class="mt-3 mb-0" style="font-size:.75rem;color:var(--text-muted)">
+    <i class="fas fa-code me-1"></i>API: <code style="font-size:.72rem;color:var(--green)">POST /api/admin/users</code>
+    con sesión iniciada (JSON: <code>username</code>, <code>email</code>, <code>password</code>).
+</p>
+{% endblock %}

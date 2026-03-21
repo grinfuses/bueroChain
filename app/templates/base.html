@@ -521,6 +521,13 @@
     </div>
     {% if current_user.is_authenticated %}
     <div class="d-flex align-items-center gap-2">
+        {% if current_user.is_super_admin %}
+        <a href="{{ url_for('ui.admin_users') }}" class="btn-explain" style="text-decoration:none;background:rgba(212,160,23,.12);
+           border-color:rgba(212,160,23,.4);color:var(--yellow)"
+           title="Crear y listar usuarios">
+            <i class="fas fa-user-shield me-2"></i>Usuarios
+        </a>
+        {% endif %}
         <a href="/nfts" class="btn-explain" style="text-decoration:none"
            title="Galería NFT BueroChain">
             <i class="fas fa-palette me-2"></i>NFTs
@@ -546,6 +553,18 @@
 
 <div class="container-fluid py-3 px-4" style="max-width:1400px;margin:0 auto">
     <div id="alerts-container" style="position:sticky;top:70px;z-index:50"></div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="mb-2">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show py-2 mb-2" role="alert" style="font-size:.85rem">
+                {{ message }}
+                <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
     {% block content %}{% endblock %}
 </div>
 

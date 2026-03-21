@@ -33,17 +33,20 @@ app/models/
   user.py                → User(username, email, password) — crea cartera al init
   nft.py                 → NFT(token_id, name, description, owner_address, …)
 app/routes/
-  ui.py                  → rutas HTML: /, /login, /logout, /dashboard, /nfts
+  ui.py                  → rutas HTML: /, /login, /logout, /dashboard, /nfts, /admin/usuarios
   blockchain.py          → API JSON: /chain /mine /transaction/new /balance /validate
   nft.py                 → API JSON: /nft/mint /nft/transfer /nfts/data
   wallet.py              → API JSON: /wallet /wallet/transactions
-  auth.py                → API JSON: /api/auth (con prefijo /api)
+  auth.py                → API JSON: /api/register, /api/login, … y POST /api/admin/users (super admin)
+app/authz.py             → decorador super_admin_required
+app/user_service.py      → create_user_if_valid (registro público + admin)
 app/templates/
   base.html              → layout, navbar, offcanvas de explicaciones, CSS variables
   login.html             → formulario de login
   dashboard.html         → cartera + enviar + minería + mempool + cadena de bloques
   nfts.html              → galería NFT + modales mint/transfer
-config.py                → DIFFICULTY, BLOCK_REWARD, SECRET_KEY, DATABASE_URL
+  admin_users.html       → crear usuarios (solo super admin)
+config.py                → DIFFICULTY, BLOCK_REWARD, SECRET_KEY, SUPER_ADMIN_USERNAME (por defecto jnaranjo)
 ```
 
 ---
@@ -90,8 +93,8 @@ Usuario envía BUERO
        └─ blockchain.add_transaction(from, to, amount)
             └─ añade a blockchain.pending_transactions
 
-Usuario mina bloque
-  └─ GET /mine
+Super admin mina bloque (solo ese usuario)
+  └─ GET /mine (403 para el resto)
        └─ blockchain.mine_pending_transactions(miner_address)
             └─ crea Block, calcula PoW, añade a chain
             └─ pending_transactions = [recompensa de red]
@@ -104,6 +107,11 @@ Usuario mintea NFT
 ```
 
 ---
+
+## Super admin
+
+- El usuario cuyo `username` coincide con `Config.SUPER_ADMIN_USERNAME` (variable de entorno `SUPER_ADMIN_USERNAME`, por defecto **`jnaranjo`**) puede: crear usuarios (**`/admin/usuarios`**, **`POST /api/admin/users`**), y **minar** (**`GET /mine`**). El resto solo envía transacciones entre ellos.
+- No hay columna en BD: el rol se deriva solo del nombre de usuario y la config.
 
 ## Reglas importantes para el agente
 

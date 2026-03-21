@@ -3,11 +3,11 @@ from datetime import datetime
 from .block import Block
 
 class Blockchain:
-    def __init__(self, difficulty):
+    def __init__(self, difficulty, mining_reward=10):
         self.chain = []
         self.difficulty = difficulty
         self.pending_transactions = []
-        self.mining_reward = 10
+        self.mining_reward = mining_reward
         self.create_genesis_block()
 
     def create_genesis_block(self):

@@ -51,7 +51,11 @@
         <div class="card h-100 card-accent-green">
             <div class="card-header">
                 <i class="fas fa-wallet me-2" style="color:var(--green)"></i>Mi Cartera
-                {% if current_user.username == 'admin' %}
+                {% if current_user.is_super_admin %}
+                <span class="ms-auto badge" style="background:rgba(212,160,23,.15);border:1px solid rgba(212,160,23,.4);color:var(--yellow);font-size:.68rem;border-radius:20px;padding:.2rem .55rem">
+                    <i class="fas fa-user-shield me-1"></i>Super admin
+                </span>
+                {% elif current_user.username == 'admin' %}
                 <span class="ms-auto badge" style="background:rgba(212,160,23,.15);border:1px solid rgba(212,160,23,.4);color:var(--yellow);font-size:.68rem;border-radius:20px;padding:.2rem .55rem">
                     <i class="fas fa-crown me-1"></i>Creador
                 </span>
@@ -98,10 +102,33 @@
                 <button class="btn btn-send w-100 py-2 mt-auto" onclick="sendTransaction()" id="sendBtn">
                     <i class="fas fa-paper-plane me-2"></i>Enviar
                 </button>
-                <p class="text-center mb-0" style="font-size:.72rem;color:var(--text-muted)">
-                    <i class="fas fa-info-circle me-1"></i>
-                    La transacción queda pendiente hasta que alguien mine un bloque
-                </p>
+                <div class="text-center" style="font-size:.72rem;color:var(--text-muted);line-height:1.45">
+                    <p class="mb-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        {% if can_mine %}
+                        La transacción entra en la <strong style="color:var(--text-main)">cola de pendientes</strong> (mempool).
+                        Cuando minas, la incluyes junto con el resto en el siguiente bloque.
+                        {% else %}
+                        La transacción entra en la <strong style="color:var(--text-main)">cola de pendientes</strong>: todos la ven abajo al instante.
+                        No forma parte de la cadena hasta que el super admin <strong style="color:var(--text-main)">mine</strong> y la meta en un bloque.
+                        {% endif %}
+                    </p>
+                    <details class="edu-details text-start mx-auto" style="max-width:100%;font-size:.7rem;border:1px solid var(--border);border-radius:8px;padding:.35rem .6rem;background:var(--bg-input)">
+                        <summary class="user-select-none" style="cursor:pointer;color:var(--blue);font-weight:600">
+                            ¿Por qué no se añade sola a un bloque?
+                        </summary>
+                        <p class="mb-2 mt-2" style="color:var(--text-muted)">
+                            En las blockchains reales <strong style="color:var(--text-main)">no se crea un bloque por cada pago</strong>.
+                            Las transferencias se publican primero en una cola compartida (mempool); el minero
+                            <strong style="color:var(--text-main)">agrupa varias</strong>, las mete en un bloque y hace la prueba de trabajo (PoW)
+                            para enlazarlo al anterior. Así la red procesa muchas operaciones por bloque y todas quedan atadas al mismo hash.
+                        </p>
+                        <p class="mb-0" style="color:var(--text-muted)">
+                            Aquí lo simplificamos: una sola cola y un minero — pero el orden de ideas es el mismo que en Bitcoin y similares:
+                            <em>anunciar → esperar en mempool → incluir en bloque al minar</em>.
+                        </p>
+                    </details>
+                </div>
             </div>
         </div>
     </div>
@@ -127,9 +154,11 @@
                     </div>
                 </div>
 
-                <p class="text-center mb-0" style="font-size:.75rem;color:var(--text-muted);line-height:1.5">
-                    Agrupa las transacciones pendientes en un nuevo bloque.<br>
-                    El servidor calcula miles de hashes hasta encontrar uno válido.
+                {% if can_mine %}
+                <p class="text-center mb-0" style="font-size:.75rem;color:var(--text-muted);line-height:1.55">
+                    Las transferencias de los usuarios <strong style="color:var(--text-main)">no escriben la cadena solas</strong>:
+                    se quedan en pendientes hasta que <strong style="color:var(--text-main)">tú</strong> minas.
+                    Entonces las empaquetas en un bloque nuevo y el PoW fija ese bloque en la cadena.
                 </p>
 
                 <button class="btn btn-mine w-100 py-2 mt-1" id="mineBtn" onclick="mineBlock()">
@@ -142,6 +171,22 @@
                     </div>
                     <div class="mine-hash-preview" id="hashPreview">&nbsp;</div>
                 </div>
+                {% else %}
+                <div class="w-100 rounded p-3 text-start" style="background:rgba(106,125,154,.12);border:1px solid var(--border);font-size:.75rem;color:var(--text-muted);line-height:1.55">
+                    <div class="text-center mb-2">
+                        <i class="fas fa-lock mb-1 d-block" style="color:var(--orange);font-size:1.2rem"></i>
+                        <span style="font-weight:600;color:var(--text-main)">Minería solo super admin</span>
+                    </div>
+                    <ol class="ps-3 mb-2 small" style="margin-bottom:.5rem!important">
+                        <li class="mb-1"><strong style="color:var(--text-main)">Tú envías BUERO</strong> → la red (en este demo, el servidor) la guarda en la <strong style="color:var(--text-main)">cola de pendientes</strong>. Ahí la ve todo el mundo; aún <em>no</em> está dentro de un bloque.</li>
+                        <li class="mb-1">Si cada envío creara un bloque al instante, la cadena sería enorme y no habría un paso claro de “empaquetar y sellar” varias operaciones juntas — en la práctica real <strong style="color:var(--text-main)">siempre hay espera en mempool</strong>.</li>
+                        <li class="mb-0">El <strong style="color:var(--text-main)">super admin mina</strong>: recoge las pendientes, forma un bloque, calcula el hash válido (PoW) y lo encadena. Entonces esas transacciones dejan de ser solo “anunciadas” y pasan a estar <strong style="color:var(--text-main)">grabadas en la cadena</strong>.</li>
+                    </ol>
+                    <p class="mb-0 text-center small" style="font-size:.68rem;color:var(--text-muted)">
+                        Resumen: <span style="color:var(--green)">visible al enviar</span> (pendientes) → <span style="color:var(--orange)">fijada al minar</span> (bloque + cadena).
+                    </p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -154,9 +199,14 @@
         Transacciones Pendientes
         <span class="ms-2 badge" id="pendingCount"
               style="background:rgba(240,145,50,.15);border:1px solid rgba(240,145,50,.3);color:var(--orange);font-size:.7rem;border-radius:20px;padding:.15rem .5rem">0</span>
-        <span class="ms-auto" style="font-size:.72rem;color:var(--text-muted);font-weight:400">
-            Esperando ser incluidas en un bloque
+        <span class="ms-auto text-end" style="font-size:.72rem;color:var(--text-muted);font-weight:400;max-width:min(420px,55%)">
+            Mempool: visibles para todos; aún <strong style="color:var(--text-main);font-weight:600">no</strong> están dentro de un bloque minado
         </span>
+    </div>
+    <div class="px-3 py-2" style="font-size:.7rem;color:var(--text-muted);line-height:1.45;border-bottom:1px solid var(--border);background:rgba(240,145,50,.06)">
+        <i class="fas fa-lightbulb me-1" style="color:var(--orange)"></i>
+        No es un “retraso por error”: el diseño separa <strong style="color:var(--text-main)">anunciar la transacción</strong> (esto que ves aquí)
+        de <strong style="color:var(--text-main)">incluirla en un bloque</strong> cuando el minero ejecuta la minería.
     </div>
     <div class="card-body p-0" id="pendingContainer">
         <div class="d-flex align-items-center justify-content-center gap-2 py-3" id="pendingEmpty" style="font-size:.85rem;color:var(--text-main)">

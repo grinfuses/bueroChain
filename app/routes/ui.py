@@ -1,10 +1,19 @@
 import json
-from flask import Blueprint, render_template, redirect, url_for, request
+from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from app.models.user import User
 from app.models.nft import NFT
 from app.routes.blockchain import blockchain
+from app.authz import super_admin_required
+from app.user_service import create_user_if_valid
 from config import Config
+
+_CREATE_USER_ERR_ES = {
+    'username and email are required': 'Usuario y correo son obligatorios.',
+    'password is required': 'La contraseña es obligatoria.',
+    'Username already exists': 'Ese nombre de usuario ya existe.',
+    'Email already exists': 'Ese correo ya está registrado.',
+}
 
 bp = Blueprint('ui', __name__)
 
@@ -56,6 +65,7 @@ def dashboard():
         all_users_json=all_users_json,
         mining_reward=blockchain.mining_reward,
         difficulty_zeros='0' * Config.DIFFICULTY,
+        can_mine=current_user.is_super_admin,
     )
 
 
@@ -77,3 +87,24 @@ def nfts():
 @login_required
 def sepolia():
     return render_template('sepolia.html')
+
+
+@bp.route('/admin/usuarios')
+@super_admin_required
+def admin_users():
+    users = User.query.order_by(User.username).all()
+    return render_template('admin_users.html', users=users)
+
+
+@bp.route('/admin/usuarios/nuevo', methods=['POST'])
+@super_admin_required
+def admin_create_user_post():
+    username = request.form.get('username', '').strip()
+    email = request.form.get('email', '').strip()
+    password = request.form.get('password', '')
+    user, err = create_user_if_valid(username, email, password)
+    if err:
+        flash(_CREATE_USER_ERR_ES.get(err, err), 'danger')
+        return redirect(url_for('ui.admin_users'))
+    flash(f'Usuario «{user.username}» creado correctamente.', 'success')
+    return redirect(url_for('ui.admin_users'))

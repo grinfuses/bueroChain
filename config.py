@@ -15,4 +15,7 @@ class Config:
     
     # Node configuration
     NODE_PORT = int(os.environ.get('NODE_PORT', 5000))
-    NODES = os.environ.get('NODES', '').split(',')  # List of other nodes in the network 
+    NODES = os.environ.get('NODES', '').split(',')  # List of other nodes in the network
+
+    # Super admin: puede crear usuarios (UI + POST /api/admin/users)
+    SUPER_ADMIN_USERNAME = (os.environ.get('SUPER_ADMIN_USERNAME') or 'jnaranjo').strip() 
