@@ -227,12 +227,27 @@ Sobre el gradiente se superpone un overlay SVG con círculos cuyas posiciones y 
 | `owner_address` | TEXT | Dirección actual del propietario |
 | `creator_address` | TEXT | Dirección del creador original |
 | `created_at` | REAL | Unix timestamp de creación |
+| `image_filename` | TEXT NULL | Imagen subida por el usuario (opcional, en `app/static/nft_images/`). Si es `NULL`, el frontend muestra el arte generativo por hash descrito arriba. |
 
 ---
 
 ## 6. Referencia de API
 
-Todas las rutas devuelven JSON. Las marcadas con 🔒 requieren sesión activa (cookie).
+Todas las rutas devuelven JSON. Las marcadas con 🔒 requieren sesión activa (cookie). Las marcadas con 👑 además requieren ser super admin.
+
+### Sistema
+
+#### `GET /health`
+Comprobación rápida de que el nodo está arriba. No requiere sesión — útil para verificar conectividad desde los equipos del aula antes de empezar.
+
+```json
+{ "status": "ok" }
+```
+
+#### `GET /ataque.py`
+Descarga el script educativo `ataque.py` como fichero adjunto (`Content-Disposition: attachment`). Es una ruta corta equivalente a `GET /static/downloads/ataque.py`. No requiere sesión.
+
+Usado en el Ejercicio 4 de clase. Acompañado de un QR generado en `app/static/downloads/ataque-qr.png`.
 
 ### Blockchain
 
@@ -353,6 +368,33 @@ Lista todos los NFTs con información del propietario.
 
 ---
 
+### Administración
+
+#### `POST /api/admin/users` 🔒 👑
+Crea un usuario nuevo con cartera. Solo el super admin.
+
+Request:
+```json
+{ "username": "alumno1", "email": "alumno1@buero.local", "password": "..." }
+```
+
+Response: `201 Created` con el objeto del usuario creado. Errores: `400` (campos faltantes, usuario/email duplicados).
+
+#### `DELETE /api/admin/users/<id>` 🔒 👑
+Borra un usuario por su `id`. Solo el super admin.
+
+```json
+{ "message": "Usuario alumno1 eliminado" }
+```
+
+Errores: `404` (usuario no encontrado), `400` (intento de auto-borrado: el super admin no puede borrarse a sí mismo).
+
+> **Nota.** Los NFTs asociados a la cartera del usuario borrado **no se eliminan** de SQLite ni de la cadena. La dirección queda huérfana. Esto es pedagógicamente consistente con el comportamiento de blockchain real: los tokens siguen existiendo atribuidos a una clave cuyo propietario ya no existe en el sistema.
+
+La UI expone el mismo borrado vía `POST /admin/usuarios/<id>/borrar` desde el formulario de `/admin/usuarios`, con confirmación JavaScript antes de enviar.
+
+---
+
 ## 7. Interfaz web
 
 ### Dashboard (`/dashboard`)
@@ -456,40 +498,77 @@ python /opt/bueroChain/bueroChain/seed_users.py
 
 ## 11. Guía de uso en clase
 
+> **Credenciales.** Las contraseñas iniciales de los 3 usuarios de demo están definidas en [`seed_users.py`](seed_users.py). Cámbialas antes de cada taller y reparte las nuevas en vivo; **no** las publiques en pizarra, repositorio público, ni materiales impresos.
+>
+> **Quién puede minar.** Solo el usuario definido en `SUPER_ADMIN_USERNAME` (por defecto `jnaranjo`) tiene permiso sobre `GET /mine`. Los ejercicios asumen que el profesor se loguea como ese usuario para confirmar transacciones; los alumnos solo envían.
+
 ### Ejercicio 1 — Introducción (15 min)
 
-1. El profesor inicia sesión como `admin` y proyecta el dashboard.
+1. El profesor inicia sesión como `jnaranjo` (super admin) y proyecta el dashboard.
 2. Explica los conceptos del bloque génesis con el panel lateral.
-3. Cada alumno inicia sesión con `jnaranjo` o `dorgaz` en su dispositivo.
+3. Cada alumno inicia sesión con las credenciales que le haya repartido el profesor.
 4. Observan que todos ven la misma cadena (compartida en el servidor).
 
 ### Ejercicio 2 — Primera transacción (10 min)
 
-1. `admin` mina el primer bloque → recibe 10 BUERO (recompensa de red).
-2. `admin` envía 3 BUERO a `jnaranjo`.
-3. Mostrar: la transacción aparece en la mempool (naranja) pero el saldo no cambia en la cadena aún.
-4. `jnaranjo` (o cualquier otro) mina un bloque → la transacción se confirma.
-5. Observar cómo el bloque recién minado aparece en la cadena.
+1. `jnaranjo` mina un bloque vacío → recibe 10 BUERO como recompensa de red. Mostrar cómo el balance aparece en la cartera solo después de minar.
+2. `jnaranjo` envía 3 BUERO a `admin`.
+3. Mostrar: la transacción aparece en la mempool marcada en naranja. El saldo de `jnaranjo` **ya descuenta** los 3 BUERO (pendientes incluidas), pero en la cadena todavía no consta.
+4. `jnaranjo` mina otro bloque → la transacción queda confirmada, `admin` pasa a tener 3 BUERO.
+5. Observar cómo el nuevo bloque aparece encadenado al anterior en la visualización horizontal. Señalar `previous_hash` == `hash` del bloque inmediatamente anterior.
 
 ### Ejercicio 3 — Proof of Work (10 min)
 
-1. Cambiar `DIFFICULTY = 1` → minar instantáneo.
-2. Cambiar `DIFFICULTY = 4` → minar tarda unos segundos.
-3. Discutir: ¿por qué Bitcoin usa dificultad 22+?
+1. Cambiar `DIFFICULTY = 1` en `config.py`, reiniciar el servicio y minar → instantáneo.
+2. Cambiar `DIFFICULTY = 4` → minar tarda unos segundos; con 5 son varios segundos.
+3. Discutir: Bitcoin usa una dificultad equivalente a 22+ ceros hexadecimales. ¿Cuánto tardaría este servidor?
 
-### Ejercicio 4 — Inmutabilidad (10 min)
+### Ejercicio 4 — Romper la cadena con `ataque.py` (25 min)
 
-1. Abrir `/validate` → `true`.
-2. Explicar qué pasaría si alguien modificara un bloque antiguo.
-3. Mostrar el hash anterior en cada bloque y cómo conectan.
+Este es el ejercicio central del taller. Demuestra por qué la cadena es inmutable **sin tocar ni una línea del servidor**.
+
+**Distribución del script**
+
+El script se sirve desde el propio nodo BueroChain:
+
+- URL directa (descarga como attachment): `http://<IP>:2026/ataque.py`
+- QR PNG listo para proyectar o imprimir: `http://<IP>:2026/static/downloads/ataque-qr.png`
+
+**Pasos del ejercicio**
+
+1. Los alumnos escanean el QR (proyectado o impreso) y descargan `ataque.py`. Requisito: Python 3.8+ y `pip install requests`.
+2. Ejecutan: `python ataque.py --url http://<IP>:2026`
+3. El script realiza cinco pasos y los imprime en la terminal:
+   1. `GET /chain` — descarga una copia local de la cadena.
+   2. Recorre la copia y escoge el primer bloque con una transacción real como "víctima".
+   3. Multiplica el `amount` por 100 **en memoria**, sobre el diccionario local.
+   4. Recalcula el hash del bloque modificado usando exactamente la misma función `calculate_hash()` que el servidor. Muestra que el hash nuevo no coincide con el registrado — cambiar un byte cambia el hash entero.
+   5. `GET /validate` → el servidor responde `{"is_valid": true}`, porque el servidor nunca ha visto nuestro cambio.
+
+**El mensaje didáctico**
+
+El script **no envía nada al servidor**. Toda la manipulación ocurre en la RAM del ordenador del alumno. Por eso `/validate` devuelve `true`: el servidor sigue con su copia intacta. Esto demuestra dos cosas a la vez:
+
+1. **Detectar una manipulación es trivial y gratuito** — basta con recalcular el hash y compararlo con el registrado. Una instrucción SHA-256.
+2. **Ocultar una manipulación es computacionalmente carísimo** — habría que rehacer el hash del bloque manipulado, luego corregir el `previous_hash` del bloque siguiente (que ya no cuadra), rehacer su Proof of Work (porque el nuevo hash seguramente no empieza por N ceros), repetir el proceso para **todos** los bloques posteriores, y además ir más rápido que el resto de la red honesta que está añadiendo bloques al ritmo normal.
+
+Blockchain no es inmutable por magia criptográfica: es inmutable porque **detectar manipulaciones es gratis y ocultarlas es carísimo**.
+
+**Preguntas para la puesta en común**
+
+- ¿Por qué `/validate` devolvió `true` si acabamos de "manipular" un bloque?
+- ¿En qué posición del hash aparece el primer carácter diferente?
+- Si quisiéramos colar la falsificación en el servidor, ¿qué tendríamos que rehacer exactamente?
+- ¿Qué es el ataque del 51% y por qué es económicamente inviable en Bitcoin?
+- En BueroChain con un solo nodo minando, ¿qué porcentaje de poder de cómputo tiene el profesor? (Respuesta: el 100%. Por eso una blockchain centralizada no tiene sentido como sistema de confianza — cae en el slide 23 del mazo: blockchain solo aporta valor cuando hay múltiples partes sin confianza mutua.)
 
 ### Ejercicio 5 — NFTs (15 min)
 
-1. `admin` mintea un NFT con su nombre → coste 5 BUERO (pendiente).
-2. Mostrar que el arte es único generado por el hash del token.
-3. Minar para confirmar la tarifa.
-4. Transferir el NFT a `jnaranjo`.
-5. Discutir: ¿en qué se diferencia de una imagen JPEG normal?
+1. `admin` mintea un NFT con su nombre → coste 5 BUERO, que queda pendiente en la mempool.
+2. Mostrar que el arte visual es único y completamente determinista: se deriva del `token_id` (SHA-256 de `name + address + timestamp`).
+3. `jnaranjo` mina para confirmar la tarifa del minteo.
+4. `admin` transfiere el NFT a `jnaranjo` → la titularidad cambia inmediatamente en SQLite.
+5. Discutir: ¿en qué se diferencia de una imagen JPEG normal? ¿Qué pasa si alguien guarda una captura del arte del NFT?
 
 ---
 
