@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
+from app import db
 from app.models.user import User
 from app.authz import super_admin_required
 from app.user_service import create_user_if_valid
@@ -45,6 +46,19 @@ def admin_create_user():
     if err:
         return jsonify({"error": err}), 400
     return jsonify(user.to_dict()), 201
+
+
+@bp.route('/admin/users/<int:user_id>', methods=['DELETE'])
+@super_admin_required
+def admin_delete_user(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+    if user.id == current_user.id:
+        return jsonify({"error": "No puedes borrar tu propio usuario"}), 400
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"message": f"Usuario {user.username} eliminado"}), 200
 
 
 @bp.route('/login', methods=['POST'])

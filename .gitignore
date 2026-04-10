@@ -39,4 +39,8 @@ env/
 .env
 
 # Logs
-*.log 
+*.log
+
+# Taller: scripts descargables servidos por Flask
+!app/static/downloads/
+!app/static/downloads/**

@@ -8,8 +8,8 @@ from app.models.user import User
 app = create_app()
 
 USERS = [
-    ('admin',    'admin@buero.local',    'admin123'),
-    ('jnaranjo', 'jnaranjo@buero.local', 'jnaranjo123'),
+    ('admin',    'admin@buero.local',    'prometeo2026'),
+    ('jnaranjo', 'jnaranjo@buero.local', 'zaharajerez'),
     ('dorgaz',   'dorgaz@buero.local',   'dorgaz123'),
 ]
 

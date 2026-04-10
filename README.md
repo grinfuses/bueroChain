@@ -26,20 +26,22 @@ cd /opt/bueroChain/bueroChain
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python seed_users.py       # Crea los 3 usuarios de demo
-python run_node.py --port 5000
+python run_node.py --port 2026
 ```
 
-Abre `http://localhost:5000` en el navegador.
+Abre `http://localhost:2026` en el navegador.
 
 ---
 
 ## Credenciales de demo
 
-| Usuario | Contraseña | Rol |
-|---|---|---|
-| `admin` | `admin123` | Creador (corona en cartera) |
-| `jnaranjo` | `jnaranjo123` | Alumno |
-| `dorgaz` | `dorgaz123` | Alumno |
+Las contraseñas iniciales se definen en [`seed_users.py`](seed_users.py). Cambia los valores antes de lanzar un taller público — el instructor reparte las credenciales en clase.
+
+| Usuario | Rol |
+|---|---|
+| `admin` | Creador (corona en cartera) |
+| `jnaranjo` | Super admin — único con permiso para minar y borrar usuarios |
+| `dorgaz` | Alumno |
 
 ---
 

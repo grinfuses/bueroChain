@@ -2,6 +2,7 @@ import argparse
 import os
 from app import create_app, db
 from app.models.user import User
+from config import Config
 
 app = create_app()
 
@@ -23,7 +24,7 @@ def init_db():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run a BueroChain node')
-    parser.add_argument('--port', type=int, default=5000, help='Port to run the node on')
+    parser.add_argument('--port', type=int, default=Config.NODE_PORT, help='Port to run the node on')
     args = parser.parse_args()
 
     init_db()

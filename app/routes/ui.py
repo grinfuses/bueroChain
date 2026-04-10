@@ -1,6 +1,8 @@
 import json
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+import os
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, send_from_directory, current_app
 from flask_login import login_user, logout_user, login_required, current_user
+from app import db
 from app.models.user import User
 from app.models.nft import NFT
 from app.routes.blockchain import blockchain
@@ -23,6 +25,22 @@ def index():
     if current_user.is_authenticated:
         return redirect(url_for('ui.dashboard'))
     return redirect(url_for('ui.login'))
+
+
+@bp.route('/health')
+def health():
+    return jsonify({"status": "ok"})
+
+
+@bp.route('/ataque.py')
+def descargar_ataque():
+    downloads_dir = os.path.join(current_app.root_path, 'static', 'downloads')
+    return send_from_directory(
+        downloads_dir,
+        'ataque.py',
+        mimetype='text/x-python',
+        as_attachment=True,
+    )
 
 
 @bp.route('/login', methods=['GET', 'POST'])
@@ -107,4 +125,21 @@ def admin_create_user_post():
         flash(_CREATE_USER_ERR_ES.get(err, err), 'danger')
         return redirect(url_for('ui.admin_users'))
     flash(f'Usuario «{user.username}» creado correctamente.', 'success')
+    return redirect(url_for('ui.admin_users'))
+
+
+@bp.route('/admin/usuarios/<int:user_id>/borrar', methods=['POST'])
+@super_admin_required
+def admin_delete_user_post(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        flash('Usuario no encontrado.', 'danger')
+        return redirect(url_for('ui.admin_users'))
+    if user.id == current_user.id:
+        flash('No puedes borrar tu propio usuario.', 'danger')
+        return redirect(url_for('ui.admin_users'))
+    username = user.username
+    db.session.delete(user)
+    db.session.commit()
+    flash(f'Usuario «{username}» eliminado.', 'success')
     return redirect(url_for('ui.admin_users'))

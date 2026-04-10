@@ -18,7 +18,7 @@ BueroChain es una **blockchain educativa** en Flask (Python). El objetivo es la 
 | Base de datos | SQLite (fichero `instance/buerochain.db`) |
 | Frontend | Jinja2 · Bootstrap 5.3 · Font Awesome 6 · Inter · JetBrains Mono |
 | Blockchain | Implementación propia en Python (sin librerías externas de blockchain) |
-| Proceso | systemd service `buerochain` · puerto 5000 |
+| Proceso | systemd service `buerochain` · puerto 2026 |
 
 ---
 
@@ -145,7 +145,7 @@ python seed_users.py
 
 # Borrar la BD y empezar de cero
 rm instance/buerochain.db
-python run_node.py --port 5000   # recrea la BD y el bloque génesis
+python run_node.py --port 2026   # recrea la BD y el bloque génesis
 ```
 
 ---
@@ -155,5 +155,5 @@ python run_node.py --port 5000   # recrea la BD y el bloque génesis
 - No añadir autenticación JWT ni OAuth — Flask-Login es suficiente para el contexto educativo.
 - No migrar a PostgreSQL — SQLite es intencional.
 - No añadir WebSockets para actualizaciones en tiempo real — el polling cada 6 s es suficiente.
-- No cambiar el puerto 5000 sin actualizar también el fichero de servicio systemd.
+- No cambiar el puerto 2026 sin actualizar también el fichero de servicio systemd.
 - No hacer `pip install` de nuevas dependencias sin añadirlas a `requirements.txt`.

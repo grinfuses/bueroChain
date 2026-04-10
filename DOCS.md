@@ -43,7 +43,7 @@ BueroChain es una implementación completa y funcional de una blockchain con int
 └────────────────────────┬────────────────────────────────────┘
                          │ HTTP
 ┌────────────────────────▼────────────────────────────────────┐
-│                    Flask (puerto 5000)                       │
+│                    Flask (puerto 2026)                       │
 │                                                             │
 │  Blueprints:                                                │
 │  ├── ui.py         → HTML: /, /login, /dashboard, /nfts    │
@@ -423,7 +423,7 @@ Ver sección [5. Sistema NFT → Tabla SQLite](#tabla-sqlite-nfts).
 ```env
 SECRET_KEY=cambia-esto-en-produccion
 DATABASE_URL=sqlite:///buerochain.db
-NODE_PORT=5000
+NODE_PORT=2026
 NODES=                              # IPs de otros nodos separadas por coma
 ```
 
@@ -507,7 +507,7 @@ After=network.target
 [Service]
 User=ubuntu
 WorkingDirectory=/opt/bueroChain/bueroChain
-ExecStart=/opt/bueroChain/bueroChain/venv/bin/python run_node.py --port 5000
+ExecStart=/opt/bueroChain/bueroChain/venv/bin/python run_node.py --port 2026
 Restart=always
 RestartSec=5
 
@@ -518,7 +518,7 @@ WantedBy=multi-user.target
 ### Firewall (UFW)
 
 ```bash
-sudo ufw allow 5000/tcp    # acceso directo
+sudo ufw allow 2026/tcp    # acceso directo
 sudo ufw status
 ```
 
@@ -535,7 +535,7 @@ Compartir la IP del servidor con los alumnos:
 
 ```bash
 ip addr show | grep 'inet ' | grep -v '127.0'
-# Ejemplo: http://192.168.1.100:5000
+# Ejemplo: http://192.168.1.100:2026
 ```
 
 Todos los alumnos se conectan al **mismo servidor** y comparten la misma blockchain. Las transacciones y bloques son visibles para todos en tiempo real.

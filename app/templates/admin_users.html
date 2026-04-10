@@ -60,7 +60,8 @@
                                 <th class="ps-3">Usuario</th>
                                 <th>Correo</th>
                                 <th>Cartera</th>
-                                <th class="pe-3 text-end">Rol</th>
+                                <th>Rol</th>
+                                <th class="pe-3 text-end">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -71,13 +72,27 @@
                                 <td>
                                     <span class="hash-text hash-blue" style="font-size:.72rem">{{ u.wallet_address[:20] }}…</span>
                                 </td>
-                                <td class="pe-3 text-end">
+                                <td>
                                     {% if u.is_super_admin %}
                                     <span class="badge" style="background:rgba(212,160,23,.15);border:1px solid rgba(212,160,23,.4);color:var(--yellow);font-size:.65rem">Super admin</span>
                                     {% elif u.username == 'admin' %}
                                     <span class="badge" style="background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.35);color:var(--blue);font-size:.65rem">Creador</span>
                                     {% else %}
                                     <span style="color:var(--text-muted);font-size:.75rem">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-3 text-end">
+                                    {% if u.id != current_user.id %}
+                                    <form method="POST" action="{{ url_for('ui.admin_delete_user_post', user_id=u.id) }}"
+                                          onsubmit="return confirm('¿Borrar al usuario «{{ u.username }}»? Esta acción no se puede deshacer.');"
+                                          style="display:inline">
+                                        <button type="submit" class="btn btn-sm" title="Borrar usuario"
+                                                style="background:rgba(220,53,69,.12);border:1px solid rgba(220,53,69,.4);color:#e35d6a;font-size:.72rem;padding:.2rem .55rem">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span style="color:var(--text-muted);font-size:.72rem">(tú)</span>
                                     {% endif %}
                                 </td>
                             </tr>
