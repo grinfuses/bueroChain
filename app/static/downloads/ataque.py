@@ -9,6 +9,7 @@ Pasos que ejecuta:
   3. Intenta falsificar el importe de una transacción
   4. Recalcula el hash y comprueba que ya no coincide con el registrado
   5. Verifica contra el endpoint /validate del servidor
+  6. Vuelve a descargar la cadena y demuestra que el servidor sigue intacto
 
 Requisitos: Python 3.8+ y el módulo 'requests'
   pip install requests
@@ -201,6 +202,57 @@ def paso5_validar_servidor(base_url: str):
         print(f"    Alguien ya ha manipulado la cadena en el servidor.")
 
 
+def paso6_recomprobar_servidor(base_url: str, bloque_original: dict, tx_idx: int, bloque_falso: dict):
+    titular("PASO 6 — Volver a pedir la cadena al servidor")
+
+    url = f"{base_url}/chain"
+    print(f"  GET {url}")
+
+    try:
+        resp = requests.get(url, timeout=5)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        print(f"  ERROR al contactar /chain: {e}")
+        return
+
+    cadena_actual = data.get("chain", [])
+
+    # Localizamos el mismo bloque por índice
+    bloque_servidor = next(
+        (b for b in cadena_actual if b["index"] == bloque_original["index"]),
+        None
+    )
+
+    if bloque_servidor is None:
+        print(f"  ⚠ El bloque #{bloque_original['index']} ya no está en la cadena.")
+        return
+
+    importe_servidor = bloque_servidor["transactions"][tx_idx]["amount"]
+    importe_falso    = bloque_falso["transactions"][tx_idx]["amount"]
+    importe_original = bloque_original["transactions"][tx_idx]["amount"]
+    hash_servidor    = bloque_servidor["hash"]
+    hash_original    = bloque_original["hash"]
+
+    print(f"\n  Lo que tenemos en MEMORIA LOCAL (nuestra falsificación):")
+    print(f"    Importe : {importe_falso} BUERO")
+    print(f"\n  Lo que tiene el SERVIDOR ahora mismo:")
+    print(f"    Importe : {importe_servidor} BUERO")
+    print(f"    Hash    : {hash_servidor}")
+
+    if importe_servidor == importe_original and hash_servidor == hash_original:
+        print(f"\n  ✓ La cadena del servidor está IDÉNTICA a antes del ataque.")
+        print(f"    Importe intacto, hash intacto. Nuestra falsificación")
+        print(f"    nunca salió de la RAM de este script.")
+        print(f"\n  Moraleja:")
+        print(f"    Modificar tu copia local de una blockchain es como")
+        print(f"    fotocopiar un billete y tachar un cero más: tu copia")
+        print(f"    cambia, pero la realidad de la red no.")
+    else:
+        print(f"\n  ⚠ Algo ha cambiado en el servidor entre el PASO 1 y ahora.")
+        print(f"    Probablemente alguien minó un bloque o hizo una transacción.")
+
+
 def conclusion():
     titular("CONCLUSIÓN")
     print("""
@@ -248,6 +300,7 @@ def main():
     bloque_falso                = paso3_falsificar(bloque_original, tx_idx)
     paso4_recalcular_hash(bloque_original, bloque_falso)
     paso5_validar_servidor(base_url)
+    paso6_recomprobar_servidor(base_url, bloque_original, tx_idx, bloque_falso)
     conclusion()
 
 
